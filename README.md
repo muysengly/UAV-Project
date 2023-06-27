@@ -13,3 +13,8 @@ pip install numpy
 ```
 pip install matplotlib
 ```
+
+- install scipy
+```
+pip install scipy
+```
