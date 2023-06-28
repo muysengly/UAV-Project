@@ -33,7 +33,9 @@ def makeBeamCircle(xpos,ypos,maxbeam,color):
     )
     uav_beam = ax.add_patch(beam_circle)
 
-def searchGu():
+def searchGu(x,y):
+    uavx=(x+0.5)*10
+    uavy=(y+0.5)*10
     tmp_count=0
     count=0
     for k in range(10):
@@ -61,7 +63,7 @@ def searchGu():
     for k in range(10):
         if gu_memory[0][k]!=11:
             if count==0:
-                plt.plot([15,gu_memory[0][k]],[5,gu_memory[1][k]],color="red")
+                plt.plot([uavx,gu_memory[0][k]],[uavy,gu_memory[1][k]],color="red")
                 tmp_state[tmp_count][0]=gu_memory[0][k]
                 tmp_state[tmp_count][1]=gu_memory[1][k]
                 #print(tmp_state[tmp_count])
@@ -131,40 +133,6 @@ uav_z = UAV_ALTITUDE  # uav's altitude [meter]
 uav_x, uav_y, uav_z
 fig, ax = plt.subplots(figsize=(6, 6))
 
-countUAV=1
-for i in range(1,11,2):
-    if i==1 or i==5 or i==9:
-        for k in range(0,10,2):
-            makeUAV(i,k,MAX_BEAM_DIAMETER,countUAV)
-            if countUAV%2 == 0:
-                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"yellow")
-            else:
-                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"orange")
-            if countUAV%5 !=0:
-                plt.plot([(i+0.5)*10,(i+0.5)*10],[(k+0.5)*10,(k+2.5)*10],color="green")
-            elif countUAV==25:
-                continue
-            else:
-                plt.plot([(i+0.5)*10,(i+2.5)*10],[(k+0.5)*10,(k+0.5)*10],color="green")
-            countUAV+=1
-            
-    else:
-        for k in range(8,-2,-2):
-            makeUAV(i,k,MAX_BEAM_DIAMETER,countUAV)
-            if countUAV%2 == 0:
-                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"yellow")
-            else:
-                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"orange")
-            if countUAV%5 ==0:    
-                plt.plot([(i+0.5)*10,(i+2.5)*10],[(k+0.5)*10,(k+0.5)*10],color="green")
-            else:
-                plt.plot([(i+0.5)*10,(i+0.5)*10],[(k+0.5)*10,(k-1.5)*10],color="green")
-               # else:
-            countUAV+=1
-
-
-        
-#makeUAV(1,0,MAX_BEAM_DIAMETER,2)
 
 
 
@@ -182,12 +150,56 @@ print(MAX_BEAM_DIAMETER)
 print(gu_x)
 print(gu_y)
 print(gu_z)
-uavx=(uav_x_pos+0.5)*10
-uavy=(uav_y_pos+0.5)*10
+#uavx=(uav_x_pos+0.5)*10
+#uavy=(uav_y_pos+0.5)*10
 gu_memory=np.ones((2,10)) + 10 # 2 dim. array of 11, size 10x2
 tmp_state=np.ones((10,2)) 
 
-searchGu()
+countUAV=1
+for i in range(1,11,2):
+    if i==1 or i==5 or i==9:
+        for k in range(0,10,2):
+            makeUAV(i,k,MAX_BEAM_DIAMETER,countUAV)
+            if countUAV%2 == 0:
+                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"yellow")
+            else:
+                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"orange")
+            if countUAV%5 !=0:
+                plt.plot([(i+0.5)*10,(i+0.5)*10],[(k+0.5)*10,(k+2.5)*10],color="green")
+            elif countUAV==25:
+                searchGu(i,k)
+                gu_memory[0]=11
+                gu_memory[1]=11
+                for a in range(10):
+                    tmp_state[a]=1
+            else:
+                plt.plot([(i+0.5)*10,(i+2.5)*10],[(k+0.5)*10,(k+0.5)*10],color="green")
+            print(countUAV)
+            countUAV+=1
+            searchGu(i,k)
+            gu_memory[0]=11
+            gu_memory[1]=11
+            for a in range(10):
+                tmp_state[a]=1
+            
+    else:
+        for k in range(8,-2,-2):
+            makeUAV(i,k,MAX_BEAM_DIAMETER,countUAV)
+            if countUAV%2 == 0:
+                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"yellow")
+            else:
+                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"orange")
+            if countUAV%5 ==0:    
+                plt.plot([(i+0.5)*10,(i+2.5)*10],[(k+0.5)*10,(k+0.5)*10],color="green")
+            else:
+                plt.plot([(i+0.5)*10,(i+0.5)*10],[(k+0.5)*10,(k-1.5)*10],color="green")
+            print(countUAV)
+            countUAV+=1
+            searchGu(i,k)
+            gu_memory[0]=11
+            gu_memory[1]=11
+            for a in range(10):
+                tmp_state[a]=1
 
 
 plt.xlabel("x-axis [m]")
@@ -198,47 +210,4 @@ plt.yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
 plt.xlim(X_MIN, X_MAX)
 plt.ylim(Y_MIN, Y_MAX)
 plt.grid()
-
 plt.show()
-
-
-"""
-#divide into 4 quadrants like coordinate plane and search
-for k in range(10):
-    if uavx<=gu_x[k]<=uavx+17 and uavy<=gu_y[k]<=uavy+17: #quadrant1
-        print("quadrant1: ",end='')
-        print(k)
-        gu_memory[0][k]=gu_x[k]
-        gu_memory[1][k]=gu_y[k]
-    if uavx-17<=gu_x[k]<=uavx and uavy<=gu_y[k]<=uavy+17: #quadrant2
-        print("quadrant2: ",end='')
-        print(k)
-        gu_memory[0][k]=gu_x[k]
-        gu_memory[1][k]=gu_y[k]
-    if uavx-17<=gu_x[k]<=uavx and uavy-17<=gu_y[k]<=uavy: #quadrant3
-        print("quadrant3: ",end='')
-        print(k)
-        gu_memory[0][k]=gu_x[k]
-        gu_memory[1][k]=gu_y[k]
-    if uavx<=gu_x[k]<=uavx+17 and uavy-17<=gu_y[k]<=uavy: #quadrant4
-        print("quadrant4: ",end='')
-        print(k)
-        gu_memory[0][k]=gu_x[k]
-        gu_memory[1][k]=gu_y[k]
-print(gu_memory)
-for k in range(10):
-    if gu_memory[0][k]!=11:
-        if count==0:
-            plt.plot([55,gu_memory[0][k]],[55,gu_memory[1][k]],color="red")
-            tmp_state[tmp_count][0]=gu_memory[0][k]
-            tmp_state[tmp_count][1]=gu_memory[1][k]
-            #print(tmp_state[tmp_count])
-            count+=1
-        else:
-            #print(tmp_state[tmp_count])
-            plt.plot([tmp_state[tmp_count][0],gu_memory[0][k]],[tmp_state[tmp_count][1],gu_memory[1][k]],color="red")
-            tmp_count+=1
-            tmp_state[tmp_count][0]=gu_memory[0][k]
-            tmp_state[tmp_count][1]=gu_memory[1][k]
-            count+=1
-"""
