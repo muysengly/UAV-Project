@@ -51,8 +51,8 @@ GRID
 uav_x_pos = 0  # x position of uav 0,1,...,GRID_SIZE-1
 uav_y_pos = 1  # y position of uav 0,1,...,GRID_SIZE-1
 
-uav_x = GRID[0, uav_x_pos, uav_y_pos]
-uav_y = GRID[1, uav_x_pos, uav_y_pos]
+uav_x = GRID[1, uav_x_pos, uav_y_pos]
+uav_y = GRID[0, uav_x_pos, uav_y_pos]
 uav_z = UAV_ALTITUDE  # uav's altitude [meter]
 
 
@@ -62,10 +62,10 @@ uav_x, uav_y, uav_z
 fig, ax = plt.subplots(figsize=(6, 6))
 
 
-plt.scatter(x=uav_y, y=uav_x, c="red")
+plt.scatter(x=uav_x, y=uav_y, c="red")
 plt.text(x=uav_x - 3.5, y=uav_y - 4, s=f"UAV")
 beam_circle = Ellipse(
-    xy=(uav_y, uav_x),
+    xy=(uav_x, uav_y),
     width=MAX_BEAM_DIAMETER,
     height=MAX_BEAM_DIAMETER,
     angle=0,
