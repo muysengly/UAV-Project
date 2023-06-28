@@ -48,8 +48,8 @@ GRID
 
 # generate uav location
 
-uav_x_pos = 0  # x position of uav 0,1,...,GRID_SIZE-1
-uav_y_pos = 1  # y position of uav 0,1,...,GRID_SIZE-1
+uav_x_pos = 5  # x position of uav 0,1,...,GRID_SIZE-1
+uav_y_pos = 5  # y position of uav 0,1,...,GRID_SIZE-1
 
 uav_x = GRID[1, uav_x_pos, uav_y_pos]
 uav_y = GRID[0, uav_x_pos, uav_y_pos]
@@ -76,17 +76,69 @@ beam_circle = Ellipse(
 uav_beam = ax.add_patch(beam_circle)
 
 
+
 for i in range(NUM_GU):
     plt.scatter(x=gu_x[i], y=gu_y[i], c="blue")
     plt.text(x=gu_x[i] - 3.5, y=gu_y[i] - 4, s=f"GU-{i}")
     plt.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]}mWh")
 
+#if uav altitude=10m, max beam diameter=34.64m, radius=17m
+#whole grid=100x100 m, 1 grid = 10 x 10 m
+#gu's # = 10
+#uav x,y pos => 0~9, aligned center(+0.5)
+#ex. {0,1} -> {0.5, 1.5} -> {5 m, 15 m}
 print(MAX_BEAM_DIAMETER)
 print(gu_x)
 print(gu_y)
 print(gu_z)
-#for k in range(10):
-   # if 
+uavx=(uav_x_pos+0.5)*10
+uavy=(uav_y_pos+0.5)*10
+gu_memory=np.ones((2,10)) + 10 # 2 dim. array of 11, size 10x2
+tmp_state=np.ones((10,2)) 
+tmp_count=0
+count=0
+
+#divide into 4 quadrants like coordinate plane and search
+for k in range(10):
+    if uavx<=gu_x[k]<=uavx+17 and uavy<=gu_y[k]<=uavy+17: #quadrant1
+        print("quadrant1: ",end='')
+        print(k)
+        gu_memory[0][k]=gu_x[k]
+        gu_memory[1][k]=gu_y[k]
+    if uavx-17<=gu_x[k]<=uavx and uavy<=gu_y[k]<=uavy+17: #quadrant2
+        print("quadrant2: ",end='')
+        print(k)
+        gu_memory[0][k]=gu_x[k]
+        gu_memory[1][k]=gu_y[k]
+    if uavx-17<=gu_x[k]<=uavx and uavy-17<=gu_y[k]<=uavy: #quadrant3
+        print("quadrant3: ",end='')
+        print(k)
+        gu_memory[0][k]=gu_x[k]
+        gu_memory[1][k]=gu_y[k]
+    if uavx<=gu_x[k]<=uavx+17 and uavy-17<=gu_y[k]<=uavy: #quadrant4
+        print("quadrant4: ",end='')
+        print(k)
+        gu_memory[0][k]=gu_x[k]
+        gu_memory[1][k]=gu_y[k]
+print(gu_memory)
+for k in range(10):
+    if gu_memory[0][k]!=11:
+        if count==0:
+            plt.plot([55,gu_memory[0][k]],[55,gu_memory[1][k]],color="red")
+            tmp_state[tmp_count][0]=gu_memory[0][k]
+            tmp_state[tmp_count][1]=gu_memory[1][k]
+            print(tmp_state[tmp_count])
+            count+=1
+        else:
+            print(tmp_state[tmp_count])
+            plt.plot([tmp_state[tmp_count][0],gu_memory[0][k]],[tmp_state[tmp_count][1],gu_memory[1][k]],color="red")
+            tmp_count+=1
+            tmp_state[tmp_count][0]=gu_memory[0][k]
+            tmp_state[tmp_count][1]=gu_memory[1][k]
+            count+=1
+            
+
+
 
 
 plt.xlabel("x-axis [m]")
@@ -97,6 +149,7 @@ plt.yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
 plt.xlim(X_MIN, X_MAX)
 plt.ylim(Y_MIN, Y_MAX)
 plt.grid()
+
 plt.show()
 
 
