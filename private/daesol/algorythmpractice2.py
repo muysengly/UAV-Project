@@ -48,8 +48,8 @@ GRID
 
 # generate uav location
 
-uav_x_pos = 1  # x position of uav 0,1,...,GRID_SIZE-1
-uav_y_pos = 2  # y position of uav 0,1,...,GRID_SIZE-1
+uav_x_pos = 0  # x position of uav 0,1,...,GRID_SIZE-1
+uav_y_pos = 1  # y position of uav 0,1,...,GRID_SIZE-1
 
 uav_x = GRID[0, uav_x_pos, uav_y_pos]
 uav_y = GRID[1, uav_x_pos, uav_y_pos]
@@ -62,10 +62,10 @@ uav_x, uav_y, uav_z
 fig, ax = plt.subplots(figsize=(6, 6))
 
 
-plt.scatter(x=uav_x, y=uav_y, c="red")
+plt.scatter(x=uav_y, y=uav_x, c="red")
 plt.text(x=uav_x - 3.5, y=uav_y - 4, s=f"UAV")
 beam_circle = Ellipse(
-    xy=(uav_x, uav_y),
+    xy=(uav_y, uav_x),
     width=MAX_BEAM_DIAMETER,
     height=MAX_BEAM_DIAMETER,
     angle=0,
@@ -81,6 +81,13 @@ for i in range(NUM_GU):
     plt.text(x=gu_x[i] - 3.5, y=gu_y[i] - 4, s=f"GU-{i}")
     plt.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]}mWh")
 
+print(MAX_BEAM_DIAMETER)
+print(gu_x)
+print(gu_y)
+print(gu_z)
+#for k in range(10):
+   # if 
+
 
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
@@ -92,10 +99,4 @@ plt.ylim(Y_MIN, Y_MAX)
 plt.grid()
 plt.show()
 
-print(MAX_BEAM_DIAMETER)
-print(gu_x)
-print(gu_y)
-print(gu_z)
-for k in range(10):
-    print(gu_x[k])
 
