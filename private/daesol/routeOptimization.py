@@ -6,3 +6,5 @@ import openpyxl as xl
 import pandas as pd
 from scipy.spatial import distance_matrix
 
+# UAV velocity = 1m/s
+
