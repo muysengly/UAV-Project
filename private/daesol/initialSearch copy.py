@@ -149,6 +149,7 @@ for i in range(1,11,2):
             countUAV+=1
 print(gu_memory)
 
+
 wb=xl.Workbook()
 sheet1= wb.active
 sheet1.title='location'
