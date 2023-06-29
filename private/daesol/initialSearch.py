@@ -39,12 +39,12 @@ def searchGu(x,y,uavno):
     tmp_count=0
     count=0
     for k in range(10):
-        if uavx<=gu_x[k]<=uavx+17 and uavy<=gu_y[k]<=uavy+17: #quadrant1
+        if uavx-17<=gu_x[k]<=uavx+17 and uavy-17<=gu_y[k]<=uavy+17: #quadrant1
             print("quadrant1: ",end='')
             print(k)
             gu_memory[uavno][0][k]=gu_x[k]
             gu_memory[uavno][1][k]=gu_y[k]
-        if uavx-17<=gu_x[k]<=uavx and uavy<=gu_y[k]<=uavy+17: #quadrant2
+        """if uavx-17<=gu_x[k]<=uavx and uavy<=gu_y[k]<=uavy+17: #quadrant2
             print("quadrant2: ",end='')
             print(k)
             gu_memory[uavno][0][k]=gu_x[k]
@@ -58,7 +58,7 @@ def searchGu(x,y,uavno):
             print("quadrant4: ",end='')
             print(k)
             gu_memory[uavno][0][k]=gu_x[k]
-            gu_memory[uavno][1][k]=gu_y[k]
+            gu_memory[uavno][1][k]=gu_y[k]"""
     #print(gu_memory)
     for k in range(10):
         if gu_memory[uavno][0][k]!=11:
