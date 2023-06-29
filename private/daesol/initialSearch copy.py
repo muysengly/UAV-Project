@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import matplotlib.patches as mpatches
 import openpyxl as xl
+import pandas as pd
 from scipy.spatial import distance_matrix
 
 def makeUAV(xpos,ypos,maxbeam,uavno):
@@ -158,6 +159,10 @@ for x in range(2):
     for y in range(10):
         sheet1.cell(row=3+y, column=1+x,value=gu_memory[x][y])
 wb.save(filename='locationInformation.xlsx')
+
+pd.set_option('display.max_columns',None)
+df=pd.read_excel('locationInformation.xlsx')
+print(df)
 
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
