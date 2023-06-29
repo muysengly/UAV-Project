@@ -161,7 +161,7 @@ for x in range(2):
         sheet1.cell(row=3+y, column=1+x,value=gu_memory[x][y])
 wb.save(filename='locationInformation.xlsx')
 
-pd.set_option('display.max_columns',None)
+#pd.set_option('display.max_columns',None)
 df=pd.read_excel('locationInformation.xlsx')
 print(df)
 
