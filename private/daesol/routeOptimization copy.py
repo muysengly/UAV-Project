@@ -78,16 +78,10 @@ for i in range(NUM_GU):
     plt.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]}mWh")
 
 
-makeUAV(gu_memory[0][1],gu_memory[1][1],MAX_BEAM_DIAMETER,1)
-currentloc=1
+makeUAV(95,85,MAX_BEAM_DIAMETER,1)
+currentloc=int(df.iloc[0,2])
 
-#initial find distance of gu-UAV
-"""for i in range(2):
-    for x in range(10):
-        guUAVdistance[0][x]=abs(gu_memory[0][1]-gu_memory[0][x])
-        guUAVdistance[1][x]=abs(gu_memory[1][1]-gu_memory[1][x])
-        guUAVdistanceSum[x]=guUAVdistance[0][x]+guUAVdistance[1][x]"""
-
+#find distance of gu-UAV
 count12=1
 nextloc=0
 for a in range(9):
@@ -125,7 +119,7 @@ for a in range(9):
 
 
 #findloc end
-
+#print(df.iloc[0,2])
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
 plt.title("Simulation Environment")

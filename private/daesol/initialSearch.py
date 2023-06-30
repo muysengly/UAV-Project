@@ -41,11 +41,16 @@ def searchGu(x,y):
     tmp_count=0
     count=0
     for k in range(10):
-        if uavx-17<=gu_x[k]<=uavx+17 and uavy-17<=gu_y[k]<=uavy+17: #quadrant1
-            print("gu #: ",end='')
-            print(k)
-            gu_memory[0][k]=gu_x[k]
-            gu_memory[1][k]=gu_y[k]
+        if uavx-17<=gu_x[k]<=uavx+17 and uavy-17<=gu_y[k]<=uavy+17:
+            if gu_memory[0][k]!=gu_x[k] and gu_memory[1][k]!=gu_y[k]:
+                print("gu #: ",end='')
+                counter1[0]+=1
+                print(k)
+                guno[0]=k
+                gu_memory[0][k]=gu_x[k]
+                gu_memory[1][k]=gu_y[k]
+            else:
+                continue
         
 #intial parameter
 NUM_GU = 10  # number of ground users
@@ -115,40 +120,56 @@ gu_memory=np.ones((2,10)) + 10
 tmp_state=np.ones((10,2)) 
 
 countUAV=1
+counter1=np.zeros(1)
+guno=np.zeros(1)
 for i in range(1,11,2):
     if i==1 or i==5 or i==9:
         for k in range(0,10,2):
-            makeUAV(i,k,MAX_BEAM_DIAMETER,countUAV)
-            if countUAV%2 == 0:
-                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"yellow")
-            else:
-                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"orange")
-            if countUAV%5 !=0:
-                plt.plot([(i+0.5)*10,(i+0.5)*10],[(k+0.5)*10,(k+2.5)*10],color="green")
-            elif countUAV==25:
+            if counter1[0]!=10:
                 searchGu(i,k)
+                makeUAV(i,k,MAX_BEAM_DIAMETER,countUAV)
+                if countUAV%2 == 0:
+                    makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"yellow")
+                else:
+                    makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"orange")
+                if countUAV%5 !=0 and counter1[0]!=10:
+                    plt.plot([(i+0.5)*10,(i+0.5)*10],[(k+0.5)*10,(k+2.5)*10],color="green")
+                elif countUAV==25:
+                    searchGu(i,k)
+                  
+                else:
+                    if counter1[0]!=10:
+                        plt.plot([(i+0.5)*10,(i+2.5)*10],[(k+0.5)*10,(k+0.5)*10],color="green")
+                
+                print(countUAV)
+                countUAV+=1
             else:
-                plt.plot([(i+0.5)*10,(i+2.5)*10],[(k+0.5)*10,(k+0.5)*10],color="green")
-            print(countUAV)
-            searchGu(i,k)
-            countUAV+=1
+                break
+          
             
     else:
         for k in range(8,-2,-2):
-            makeUAV(i,k,MAX_BEAM_DIAMETER,countUAV)
-            if countUAV%2 == 0:
-                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"yellow")
+            if counter1[0]!=10:
+                searchGu(i,k)
+                makeUAV(i,k,MAX_BEAM_DIAMETER,countUAV)
+                if countUAV%2 == 0:
+                    makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"yellow")
+                else:
+                    makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"orange")
+                if countUAV%5 ==0 and counter1[0]!=10:    
+                    plt.plot([(i+0.5)*10,(i+2.5)*10],[(k+0.5)*10,(k+0.5)*10],color="green")
+                else:
+                    if counter1[0]!=10:
+                        plt.plot([(i+0.5)*10,(i+0.5)*10],[(k+0.5)*10,(k-1.5)*10],color="green")
+                print(countUAV)
+                countUAV+=1
             else:
-                makeBeamCircle(i,k,MAX_BEAM_DIAMETER,"orange")
-            if countUAV%5 ==0:    
-                plt.plot([(i+0.5)*10,(i+2.5)*10],[(k+0.5)*10,(k+0.5)*10],color="green")
-            else:
-                plt.plot([(i+0.5)*10,(i+0.5)*10],[(k+0.5)*10,(k-1.5)*10],color="green")
-            print(countUAV)
-            searchGu(i,k)
-            countUAV+=1
+                break
+      
+            
 print(gu_memory)
-
+print(counter1)
+print(guno[0])
 
 wb=xl.Workbook()
 sheet1= wb.active
@@ -156,6 +177,7 @@ sheet1.title='location'
 sheet1.cell(row=1,column=1,value='GU location')
 sheet1.cell(row=2,column=1,value='GU x-loc')
 sheet1.cell(row=2,column=2,value='GU y-loc')
+sheet1.cell(row=2,column=3,value=guno[0])
 for x in range(2):
     for y in range(10):
         sheet1.cell(row=3+y, column=1+x,value=gu_memory[x][y])
