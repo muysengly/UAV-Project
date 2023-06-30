@@ -99,6 +99,28 @@ for i in range(NUM_GU):
     plt.scatter(x=gu_memory[0][i], y=gu_memory[1][i], c="blue")
     plt.text(x=gu_memory[0][i] - 3.5, y=gu_memory[1][i] - 4, s=f"GU-{i}")
     plt.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]}mWh")
+makeUAV(9,8,MAX_BEAM_DIAMETER,1)
+makeBeamCircle(9,8,MAX_BEAM_DIAMETER,'orange')
+
+sxpos=95
+sypos=85
+
+stepCount=1
+foundCount=0
+foundUAVno=np.zeros(10)
+for x in range(10):
+    plt.text(x=sxpos,y=sypos,s=str(stepCount))
+    sxpos-=10
+    stepCount+=1
+    for i in range(10):
+        if sxpos-17<=gu_memory[0][i]<=sxpos+17 and sypos-17<=gu_memory[1][i]<=sypos+17:
+            if foundUAVno[i]!=1:
+                foundCount+=1
+            foundUAVno[i]=1
+            
+print(foundUAVno)
+print(foundCount)
+
 
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
