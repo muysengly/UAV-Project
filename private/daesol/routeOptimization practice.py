@@ -26,7 +26,31 @@ def makeBeamCircle(xpos,ypos,maxbeam,color):
         alpha=0.2,
     )
     uav_beam = ax.add_patch(beam_circle)
-    
+
+def findloc():
+    #find distance of gu-UAV
+    for i in range(2):
+        for x in range(10):
+            guUAVdistance[0][x]=abs(gu_memory[0][1]-gu_memory[0][x])
+            guUAVdistance[1][x]=abs(gu_memory[1][1]-gu_memory[1][x])
+            guUAVdistanceSum[x]=guUAVdistance[0][x]+guUAVdistance[1][x]
+    #find current UAV's location
+    currentloc=0
+    for x in range(10):
+        if guUAVdistanceSum[x] == 0:
+            currentloc=x
+
+    print("distance, currentloc= "+str(currentloc))
+    print(guUAVdistance)
+    print("Sum of distance")
+    print(guUAVdistanceSum)
+
+    nextloc=0
+    guUAVdistanceSum[currentloc]=10000
+    nextloc=np.argmin(guUAVdistanceSum)
+
+    plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
+
         
 #intial parameter
 NUM_GU = 10  # number of ground users
@@ -57,7 +81,6 @@ gu_bat = np.zeros((NUM_GU,)) # battery of ground user [mWh]
 #call information from excel
 gu_memory=np.ones((2,10))
 df=pd.read_excel('locationInformation.xlsx')
-print(df.iloc[1,0])
 for x in range(2):
     for y in range(10):
         gu_memory[x][y]=int(df.iloc[y+1,x])
@@ -71,24 +94,62 @@ GRID = np.array(np.meshgrid(tmp_x, tmp_y))
 GRID
 fig, ax = plt.subplots(figsize=(6, 6))
 
+guUAVdistance=np.zeros((2,10))
+guUAVdistanceSum=np.zeros(10)
+
 for i in range(NUM_GU):
     plt.scatter(x=gu_memory[0][i], y=gu_memory[1][i], c="blue")
     plt.text(x=gu_memory[0][i] - 3.5, y=gu_memory[1][i] - 4, s=f"GU-{i}")
     plt.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]}mWh")
+
+
 makeUAV(gu_memory[0][1],gu_memory[1][1],MAX_BEAM_DIAMETER,1)
+currentloc=1
+
+#initial find distance of gu-UAV
+"""for i in range(2):
+    for x in range(10):
+        guUAVdistance[0][x]=abs(gu_memory[0][1]-gu_memory[0][x])
+        guUAVdistance[1][x]=abs(gu_memory[1][1]-gu_memory[1][x])
+        guUAVdistanceSum[x]=guUAVdistance[0][x]+guUAVdistance[1][x]"""
+
+count12=1
+nextloc=0
+for a in range(9):
+    #find distance of gu-uav #2
+    print("#"+str(count12))
+    count12+=1
+    print("gumemory")
+    print(gu_memory)
+    for i in range(2):
+        for x in range(10):
+            guUAVdistance[0][x]=abs(gu_memory[0][currentloc]-gu_memory[0][x])
+            guUAVdistance[1][x]=abs(gu_memory[1][currentloc]-gu_memory[1][x])
+            guUAVdistanceSum[x]=guUAVdistance[0][x]+guUAVdistance[1][x]
+    #find current UAV's location
+
+    for x in range(10):
+        if guUAVdistanceSum[x] == 0:
+            currentloc=x
+
+    print("distance, currentloc= "+str(currentloc))
+    print(guUAVdistance)
+    print("Sum of distance")
+    print(guUAVdistanceSum)
+
+    guUAVdistanceSum[currentloc]=10000
+    print(guUAVdistanceSum)
+    nextloc=np.argmin(guUAVdistanceSum)
+    
+    print("currentloc="+str(currentloc)+", nextloc="+str(nextloc))
+    plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
+    
+    gu_memory[0][currentloc]=150
+    gu_memory[1][currentloc]=0
+    currentloc=nextloc
 
 
-stepCount=0
-foundCount=0
-foundUAVno=np.zeros(10)
-
-
-
-            
-print(foundUAVno)
-print(foundCount)
-print(stepCount)
-
+#findloc end
 
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
