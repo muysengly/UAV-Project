@@ -84,12 +84,8 @@ currentloc=int(df.iloc[0,2])
 count12=1
 nextloc=0
 guUAVdistanceSum=0
-guUAVarray=np.zeros(9)
-pathStack=np.zeros((9,10))
+guUAVarray=np.zeros(10)
 for a in range(9):
-    for x in range(2):
-        for y in range(10):
-            gu_memory[x][y]=int(df.iloc[y+1,x])
     #distanceAB=(((gu_memory[0][nextloc]-gu_memory[0][currentloc])**2)+((gu_memory[1][nextloc]-gu_memory[1][currentloc])**2))**(1/2) 
     #find distance of gu-uav #2
     print("#"+str(count12))
@@ -104,38 +100,32 @@ for a in range(9):
     for x in range(10):
         if guUAVdistance[x] == 0:
             currentloc=x
-            pathStack[a][0]=currentloc
     print("distance, currentloc= "+str(currentloc))
     print(guUAVdistance)
     print("Sum of distance")
     print(guUAVdistanceSum)
 
-    #guUAVdistance[currentloc]=10000
+    guUAVdistance[currentloc]=10000
     print(guUAVdistance)
     guUAVdistanceSum=0
-    for x in range(9):
-        guUAVdistance[currentloc]=10000
-        print(guUAVdistance)
-        if a==x:
-            nextloc=np.argmin(guUAVdistance)
-            guUAVdistance[nextloc]=10000
-        nextloc=np.argmin(guUAVdistance)
-        print(nextloc)
-        pathStack[a][x+1]=nextloc
-        guUAVdistanceSum+=guUAVdistance[np.argmin(guUAVdistance)]
-        gu_memory[0][currentloc]=150
-        gu_memory[1][currentloc]=0
-        currentloc=nextloc
-    guUAVarray[a]=guUAVdistanceSum
 
+    if a==1:
+        nextloc=np.argmin(guUAVdistance)
+        guUAVdistance[nextloc]=10000
+    nextloc=np.argmin(guUAVdistance)
+    guUAVdistanceSum+=guUAVdistance[np.argmin(guUAVdistance)]
+    guUAVarray[a]=guUAVdistanceSum
     
+    print("currentloc="+str(currentloc)+", nextloc="+str(nextloc))
+    plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
+       
+    gu_memory[0][currentloc]=150
+    gu_memory[1][currentloc]=0
+    currentloc=nextloc
 #findloc end
 
 print("distance: "+str(round(guUAVdistanceSum,2))+"m")
 print(guUAVarray)
-print(pathStack[np.argmin(guUAVarray)])
-#plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
-
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
 plt.title("Simulation Environment")
