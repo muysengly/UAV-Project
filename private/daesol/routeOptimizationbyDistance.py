@@ -10,6 +10,9 @@ import openpyxl as xl
 import pandas as pd
 from scipy.spatial import distance_matrix
 
+def has_duplicates(seq):
+    return len(seq) != len(set(seq))
+
 def makeUAV(xpos,ypos,maxbeam,uavno):
     uav_number = "UAV"+str(uavno)
     plt.scatter(x=xpos, y=ypos, c="green")
@@ -85,71 +88,94 @@ count12=1
 nextloc=0
 guUAVdistanceSum=0
 guUAVarray=np.zeros(10)
-sumArray=np.zeros(8)
-moveStack=np.zeros((8,10))
+sumArray=np.zeros(56)
+moveStack=np.zeros((56,10))
+stackcount=0
 
 #loop start
 for b in range(8):
-    count12=1
-    currentloc=int(df.iloc[0,2])
-    nextloc=0
-    guUAVdistanceSum=0
-    for x in range(2):
-        for y in range(10):
-            gu_memory[x][y]=int(df.iloc[y+1,x])
-    for a in range(9):
-        #distanceAB=(((gu_memory[0][nextloc]-gu_memory[0][currentloc])**2)+((gu_memory[1][nextloc]-gu_memory[1][currentloc])**2))**(1/2) 
-        #find distance of gu-uav #2
-        print("#"+str(count12))
-        count12+=1
-        print("gumemory")
-        print(gu_memory)
+    for c in range(7):
+        count12=1
+        currentloc=int(df.iloc[0,2])
+        nextloc=0
+        guUAVdistanceSum=0
+        for x in range(2):
+            for y in range(10):
+                gu_memory[x][y]=int(df.iloc[y+1,x])
+        for a in range(9):
+            #distanceAB=(((gu_memory[0][nextloc]-gu_memory[0][currentloc])**2)+((gu_memory[1][nextloc]-gu_memory[1][currentloc])**2))**(1/2) 
+            #find distance of gu-uav #2
+            print("#"+str(count12))
+            count12+=1
+            print("gumemory")
+            print(gu_memory)
 
-        for x in range(10):
-            guUAVdistance[x]=(((gu_memory[0][x]-gu_memory[0][currentloc])**2)+((gu_memory[1][x]-gu_memory[1][currentloc])**2))**(1/2) 
-        #find current UAV's location
+            for x in range(10):
+                guUAVdistance[x]=(((gu_memory[0][x]-gu_memory[0][currentloc])**2)+((gu_memory[1][x]-gu_memory[1][currentloc])**2))**(1/2) 
+            #find current UAV's location
 
-        for x in range(10):
-            if guUAVdistance[x] == 0:
-                currentloc=x
-        if a==0:
-            moveStack[b][a]=currentloc
-        print("distance, currentloc= "+str(currentloc))
-        print(guUAVdistance)
-        print("Sum of distance")
-        print(guUAVdistanceSum)
-        guUAVdistance[currentloc]=1000
-        
-        if b!=0 and a==b:
+            for x in range(10):
+                if guUAVdistance[x] == 0:
+                    currentloc=x
+            if a==0:
+                moveStack[stackcount][a]=currentloc
+            print("distance, currentloc= "+str(currentloc))
+            print(guUAVdistance)
+            print("Sum of distance")
+            print(guUAVdistanceSum)
+            guUAVdistance[currentloc]=1000
+            
+            if b!=0 and a==b:
+                if c==0:
+                    nextloc=np.argmin(guUAVdistance)
+                    guUAVdistance[nextloc]=1000
+                else:
+                    for x in range(c+1):
+                        nextloc=np.argmin(guUAVdistance)
+                        guUAVdistance[nextloc]=1000
+            print(guUAVdistance)
             nextloc=np.argmin(guUAVdistance)
-            guUAVdistance[nextloc]=1000
-            nextloc=np.argmin(guUAVdistance)
-            guUAVdistance[nextloc]=1000
-        print(guUAVdistance)
-        nextloc=np.argmin(guUAVdistance)
-        guUAVdistanceSum+=guUAVdistance[np.argmin(guUAVdistance)]
-        guUAVarray[a]=guUAVdistanceSum
+            guUAVdistanceSum+=guUAVdistance[np.argmin(guUAVdistance)]
+            guUAVarray[a]=guUAVdistanceSum
+            
+            print("currentloc="+str(currentloc)+", nextloc="+str(nextloc))
+            print("a="+str(a)+", b="+str(b)+", c="+str(c))
+            
+            gu_memory[0][currentloc]=150
+            gu_memory[1][currentloc]=0
+            currentloc=nextloc
+            moveStack[stackcount][a+1]=currentloc
+            if has_duplicates(moveStack[stackcount])==1:
+                sumArray[stackcount]=1000
+            else:
+                sumArray[stackcount]=guUAVdistanceSum
         
-        print("currentloc="+str(currentloc)+", nextloc="+str(nextloc))
-        
-        #plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
-        
-        gu_memory[0][currentloc]=150
-        gu_memory[1][currentloc]=0
-        currentloc=nextloc
-        moveStack[b][a+1]=currentloc
-        sumArray[b]=guUAVdistanceSum
-    #findloc end
+        print("distances",end='')
+        print(sumArray[stackcount])
+        print("stacks",end='')
+        print(moveStack[stackcount])
+        stackcount+=1
+        #test
+        n=input('continue? ')
+        if n=='a':
+            continue
+        else:
+            quit()
+
+        #findloc end
 
 #print("distance: "+str(round(guUAVdistanceSum,2))+"m")
 print("distances",end='')
 print(sumArray)
 print("stacks",end='')
 print(moveStack)
+attemptNo=np.argmin(sumArray)
+print(sumArray[attemptNo])
+print(moveStack[attemptNo])
 for x in range(2):
     for y in range(10):
         gu_memory[x][y]=int(df.iloc[y+1,x])
-attemptNo=1
+
 for x in range(9):
     yy = int(moveStack[attemptNo][x])
     yyy=int(moveStack[attemptNo][x+1])
