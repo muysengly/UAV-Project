@@ -156,12 +156,12 @@ for b in range(8):
         print(moveStack[stackcount])
         stackcount+=1
         #test
-        n=input('continue? ')
+        """n=input('continue? ')
         if n=='a':
             continue
         else:
             quit()
-
+"""
         #findloc end
 
 #print("distance: "+str(round(guUAVdistanceSum,2))+"m")
