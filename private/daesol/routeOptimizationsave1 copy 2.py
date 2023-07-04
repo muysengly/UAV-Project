@@ -118,22 +118,21 @@ for b in range(8):
         print(guUAVdistance)
         print("Sum of distance")
         print(guUAVdistanceSum)
-
         guUAVdistance[currentloc]=1000
-        #moveStack[b][a]=currentloc
-        print(guUAVdistance)
-        #guUAVdistanceSum=0
         
         if b!=0 and a==b:
             nextloc=np.argmin(guUAVdistance)
             guUAVdistance[nextloc]=1000
+            nextloc=np.argmin(guUAVdistance)
+            guUAVdistance[nextloc]=1000
+        print(guUAVdistance)
         nextloc=np.argmin(guUAVdistance)
         guUAVdistanceSum+=guUAVdistance[np.argmin(guUAVdistance)]
         guUAVarray[a]=guUAVdistanceSum
         
         print("currentloc="+str(currentloc)+", nextloc="+str(nextloc))
         
-        plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
+        #plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
         
         gu_memory[0][currentloc]=150
         gu_memory[1][currentloc]=0
@@ -147,6 +146,14 @@ print("distances",end='')
 print(sumArray)
 print("stacks",end='')
 print(moveStack)
+for x in range(2):
+    for y in range(10):
+        gu_memory[x][y]=int(df.iloc[y+1,x])
+attemptNo=1
+for x in range(9):
+    yy = int(moveStack[attemptNo][x])
+    yyy=int(moveStack[attemptNo][x+1])
+    plt.plot([gu_memory[0][yy],gu_memory[0][yyy]],[gu_memory[1][yy],gu_memory[1][yyy]],color="red")
 
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
