@@ -84,57 +84,69 @@ currentloc=int(df.iloc[0,2])
 count12=1
 nextloc=0
 guUAVdistanceSum=0
-guUAVarray=np.zeros(9)
-pathStack=np.zeros((9,10))
-for a in range(9):
+guUAVarray=np.zeros(10)
+sumArray=np.zeros(8)
+moveStack=np.zeros((8,10))
+
+#loop start
+for b in range(8):
+    count12=1
+    currentloc=int(df.iloc[0,2])
+    nextloc=0
+    guUAVdistanceSum=0
     for x in range(2):
         for y in range(10):
             gu_memory[x][y]=int(df.iloc[y+1,x])
-    #distanceAB=(((gu_memory[0][nextloc]-gu_memory[0][currentloc])**2)+((gu_memory[1][nextloc]-gu_memory[1][currentloc])**2))**(1/2) 
-    #find distance of gu-uav #2
-    print("#"+str(count12))
-    count12+=1
-    print("gumemory")
-    print(gu_memory)
+    for a in range(9):
+        #distanceAB=(((gu_memory[0][nextloc]-gu_memory[0][currentloc])**2)+((gu_memory[1][nextloc]-gu_memory[1][currentloc])**2))**(1/2) 
+        #find distance of gu-uav #2
+        print("#"+str(count12))
+        count12+=1
+        print("gumemory")
+        print(gu_memory)
 
-    for x in range(10):
-        guUAVdistance[x]=(((gu_memory[0][x]-gu_memory[0][currentloc])**2)+((gu_memory[1][x]-gu_memory[1][currentloc])**2))**(1/2) 
-    #find current UAV's location
+        for x in range(10):
+            guUAVdistance[x]=(((gu_memory[0][x]-gu_memory[0][currentloc])**2)+((gu_memory[1][x]-gu_memory[1][currentloc])**2))**(1/2) 
+        #find current UAV's location
 
-    for x in range(10):
-        if guUAVdistance[x] == 0:
-            currentloc=x
-            pathStack[a][0]=currentloc
-    print("distance, currentloc= "+str(currentloc))
-    print(guUAVdistance)
-    print("Sum of distance")
-    print(guUAVdistanceSum)
-
-    #guUAVdistance[currentloc]=10000
-    print(guUAVdistance)
-    guUAVdistanceSum=0
-    for x in range(9):
-        guUAVdistance[currentloc]=10000
+        for x in range(10):
+            if guUAVdistance[x] == 0:
+                currentloc=x
+        if a==0:
+            moveStack[b][a]=currentloc
+        print("distance, currentloc= "+str(currentloc))
         print(guUAVdistance)
-        if a==x:
+        print("Sum of distance")
+        print(guUAVdistanceSum)
+
+        guUAVdistance[currentloc]=1000
+        #moveStack[b][a]=currentloc
+        print(guUAVdistance)
+        #guUAVdistanceSum=0
+        
+        if b!=0 and a==b:
             nextloc=np.argmin(guUAVdistance)
-            guUAVdistance[nextloc]=10000
+            guUAVdistance[nextloc]=1000
         nextloc=np.argmin(guUAVdistance)
-        print(nextloc)
-        pathStack[a][x+1]=nextloc
         guUAVdistanceSum+=guUAVdistance[np.argmin(guUAVdistance)]
+        guUAVarray[a]=guUAVdistanceSum
+        
+        print("currentloc="+str(currentloc)+", nextloc="+str(nextloc))
+        
+        plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
+        
         gu_memory[0][currentloc]=150
         gu_memory[1][currentloc]=0
         currentloc=nextloc
-    guUAVarray[a]=guUAVdistanceSum
+        moveStack[b][a+1]=currentloc
+        sumArray[b]=guUAVdistanceSum
+    #findloc end
 
-    
-#findloc end
-
-print("distance: "+str(round(guUAVdistanceSum,2))+"m")
-print(guUAVarray)
-print(pathStack[np.argmin(guUAVarray)])
-#plt.plot([gu_memory[0][currentloc],gu_memory[0][nextloc]],[gu_memory[1][currentloc],gu_memory[1][nextloc]],color="red")
+#print("distance: "+str(round(guUAVdistanceSum,2))+"m")
+print("distances",end='')
+print(sumArray)
+print("stacks",end='')
+print(moveStack)
 
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
