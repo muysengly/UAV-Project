@@ -12,6 +12,6 @@ for x in range(2):
 print(a)
 for x in range(10):
     if (abs(a[0][1] - a[0][x])) < 34 and (abs(a[1][1] - a[1][x])) < 34:
-        print(x+1)
+        print(x+1+1)
 
 
