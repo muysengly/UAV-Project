@@ -165,7 +165,7 @@ for i in range(1,11,2):
                 countUAV+=1
             else:
                 break
-      
+
             
 print(gu_memory)
 print(counter1)
