@@ -96,13 +96,29 @@ for i in range(NUM_GU):
 #makeUAV(95,85,MAX_BEAM_DIAMETER,1)
 currentloc=int(df.iloc[0,2])
 
-sxpos = 85
-sypos = 75
+sxpos = 100
+sypos = 100
+trial = int(X_MAX/10)+1
+for x in range(trial):
+    sypos=100
+    for y in range(trial):
+    #test
+        for i in range(10):
+            if sxpos-MAX_BEAM_RADIUS<=gu_memory[0][i]<=sxpos+MAX_BEAM_RADIUS and sypos-MAX_BEAM_RADIUS<=gu_memory[1][i]<=sypos+MAX_BEAM_RADIUS:
+                print(str(i)+", ",end='')
+                if trial%2==0:
+                    makeBeamCirclewDot(sxpos,sypos,MAX_BEAM_DIAMETER,'orange')
+                else:
+                    makeBeamCirclewDot(sxpos,sypos,MAX_BEAM_DIAMETER,'yellow')
+        print()
+        sypos-=10
+        n=input('continue? '+str(sxpos)+', '+str(sypos+10))
+        if n=='a':
+            continue
+        else:
+            quit()
+    sxpos-=10
 
-for i in range(10):
-    if sxpos-MAX_BEAM_RADIUS<=gu_memory[0][i]<=sxpos+MAX_BEAM_RADIUS and sypos-MAX_BEAM_RADIUS<=gu_memory[1][i]<=sypos+MAX_BEAM_RADIUS:
-        print(str(i)+", ",end='')
-makeBeamCirclewDot(sxpos,sypos,MAX_BEAM_DIAMETER,'blue')
 #makeBeamCirclewDot(gu_memory[0][currentloc],gu_memory[1][currentloc],MAX_BEAM_DIAMETER,'blue')
 
 #find distance of gu-UAV
