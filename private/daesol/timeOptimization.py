@@ -101,7 +101,7 @@ sypos = 100
 trial = int(X_MAX/10)+1
 groupArea=np.zeros((10,10))+11
 tmp_groupArea=np.zeros(10)
-bigcounter=0
+bigcounter=0 
 counter1=0
 counter2=0
 for x in range(trial):

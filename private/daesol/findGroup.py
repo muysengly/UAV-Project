@@ -100,19 +100,19 @@ sxpos = 100
 sypos = 100
 trial = int(X_MAX/10)+1
 groupArea=np.zeros((10,10))+11
-tmp_groupArea=np.zeros(10)
 bigcounter=0
 counter1=0
 counter2=0
+testset=[6,5,4,11,11,11,11]
 for x in range(trial):
     sypos=100
     for y in range(trial):
         counter1=0
-        tmp_groupArea=0
+        tmp_groupArea=np.zeros(10)+11
         for i in range(10):
             if sxpos-MAX_BEAM_RADIUS<=gu_memory[0][i]<=sxpos+MAX_BEAM_RADIUS and sypos-MAX_BEAM_RADIUS<=gu_memory[1][i]<=sypos+MAX_BEAM_RADIUS:
-                print(str(i)+", ",end='')
-                tmp_groupArea[counter1]=i
+                #print(str(i)+", ",end='')
+                tmp_groupArea[counter1]=int(i)
                 counter1+=1
                 if trial%2==0:
                     makeBeamCirclewDot(sxpos,sypos,MAX_BEAM_DIAMETER,'orange')
@@ -120,7 +120,45 @@ for x in range(trial):
                     makeBeamCirclewDot(sxpos,sypos,MAX_BEAM_DIAMETER,'yellow')
         print()
         sypos-=10
-        #for
+        #tmp_groupArea=np.delete(tmp_groupArea,np.where(tmp_groupArea==11))
+        #groupArea=np.delete(groupArea,np.where(groupArea),)
+        print(tmp_groupArea)
+        
+        for a in range(10):
+            intersection=len(set(groupArea[a])^set(tmp_groupArea))
+            lengroup=len(set(groupArea[a]))
+            lentmp=len(set(tmp_groupArea))
+            print("inter: "+str(intersection))
+            print("repeat: "+str(a))
+            if np.array_equal(groupArea[a],tmp_groupArea)==1:
+                    print("case1")
+                    break
+            elif intersection>0:
+                if lengroup>lentmp:
+                    breaker=0
+                    print("case2")
+                    for b in range(10):
+                        if groupArea[a][b]==tmp_groupArea[0]:
+                            breaker=1
+                    if breaker==1:
+                        break
+                    #if groupArea[a][1]==tmp_groupArea[0]:
+                        #break
+                        #else:
+                         #   continue
+                elif lengroup<lentmp:
+                    print("case3")
+                    groupArea[a]=tmp_groupArea
+                    break
+            else:
+                groupArea[a+1]=tmp_groupArea
+                print("case4")
+                break
+
+                
+
+        print(groupArea)
+
         n=input('continue? '+str(sxpos)+', '+str(sypos+10))
         if n=='a':
             continue

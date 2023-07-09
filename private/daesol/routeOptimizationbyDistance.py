@@ -181,6 +181,14 @@ for x in range(9):
     yyy=int(moveStack[attemptNo][x+1])
     plt.plot([gu_memory[0][yy],gu_memory[0][yyy]],[gu_memory[1][yy],gu_memory[1][yyy]],color="red")
 
+wb=xl.Workbook()
+sheet1= wb.active
+sheet1.title='stack'
+for x in range(10):
+    sheet1.cell(row=1+x,column=1,value=moveStack[attemptNo][x])
+wb.save(filename='stacks.xlsx')
+
+
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
 plt.title("Simulation Environment")
