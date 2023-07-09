@@ -30,6 +30,19 @@ def makeBeamCircle(xpos,ypos,maxbeam,color):
     )
     uav_beam = ax.add_patch(beam_circle)
 
+def makeBeamCirclewDot(xpos,ypos,maxbeam,color):
+    beam_circle = Ellipse(
+        xy=(xpos, ypos),
+        width=maxbeam,
+        height=maxbeam,
+        angle=0,
+        edgecolor="none",
+        facecolor=color,
+        alpha=0.2,
+    )
+    uav_beam = ax.add_patch(beam_circle)
+    plt.scatter(xpos,ypos, c="yellow")
+
 #intial parameter
 NUM_GU = 10  # number of ground users
 
@@ -43,7 +56,7 @@ MAX_BEAM_ANGLE = 60  # maximum beamforming angle [degree]
 
 # maximum beamforming diameter [meter]
 MAX_BEAM_DIAMETER = 2*UAV_ALTITUDE*np.tan(MAX_BEAM_ANGLE*np.pi/180)
-
+MAX_BEAM_RADIUS = MAX_BEAM_DIAMETER/2
 
 X_GRID = 10  # number of x grid
 Y_GRID = 10  # number of y grid
@@ -83,16 +96,44 @@ for i in range(NUM_GU):
 #makeUAV(95,85,MAX_BEAM_DIAMETER,1)
 currentloc=int(df.iloc[0,2])
 
+sxpos = 85
+sypos = 75
+
+for i in range(10):
+    if sxpos-MAX_BEAM_RADIUS<=gu_memory[0][i]<=sxpos+MAX_BEAM_RADIUS and sypos-MAX_BEAM_RADIUS<=gu_memory[1][i]<=sypos+MAX_BEAM_RADIUS:
+        print(str(i)+", ",end='')
+makeBeamCirclewDot(sxpos,sypos,MAX_BEAM_DIAMETER,'blue')
+#makeBeamCirclewDot(gu_memory[0][currentloc],gu_memory[1][currentloc],MAX_BEAM_DIAMETER,'blue')
+
 #find distance of gu-UAV
 count12=1
 nextloc=0
 guUAVdistanceSum=0
-guUAVarray=np.zeros(10)
-sumArray=np.zeros(56)
-moveStack=np.zeros((56,10))
 stackcount=0
+ 
 
-#loop start
+
+
+plt.xlabel("x-axis [m]")
+plt.ylabel("y-axis [m]")
+plt.title("Simulation Environment")
+plt.xticks(np.arange(X_MIN, X_MAX + 1, X_GRID))
+plt.yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
+plt.xlim(X_MIN, X_MAX)
+plt.ylim(Y_MIN, Y_MAX)
+plt.grid()
+plt.show()
+
+"""for x in range(9):
+    stepCount+=1
+    #plt.text(x=sxpos,y=sypos,s=str(stepCount))
+    sxpos-=10
+    for i in range(10):
+        if sxpos-17<=gu_memory[0][i]<=sxpos+17 and sypos-17<=gu_memory[1][i]<=sypos+17:
+            if foundUAVno[i]!=1:
+                foundCount+=1
+            foundUAVno[i]=1"""
+"""
 for b in range(8):
     for c in range(7):
         count12=1
@@ -155,48 +196,12 @@ for b in range(8):
         print("stacks",end='')
         print(moveStack[stackcount])
         stackcount+=1
+"""
         #test
-        """n=input('continue? ')
+"""n=input('continue? ')
         if n=='a':
             continue
         else:
             quit()
 """
         #findloc end
-
-#print("distance: "+str(round(guUAVdistanceSum,2))+"m")
-print("distances",end='')
-print(sumArray)
-print("stacks",end='')
-print(moveStack)
-attemptNo=np.argmin(sumArray)
-print(sumArray[attemptNo])
-print(moveStack[attemptNo])
-for x in range(2):
-    for y in range(10):
-        gu_memory[x][y]=int(df.iloc[y+1,x])
-
-for x in range(9):
-    yy = int(moveStack[attemptNo][x])
-    yyy=int(moveStack[attemptNo][x+1])
-    plt.plot([gu_memory[0][yy],gu_memory[0][yyy]],[gu_memory[1][yy],gu_memory[1][yyy]],color="red")
-
-plt.xlabel("x-axis [m]")
-plt.ylabel("y-axis [m]")
-plt.title("Simulation Environment")
-plt.xticks(np.arange(X_MIN, X_MAX + 1, X_GRID))
-plt.yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
-plt.xlim(X_MIN, X_MAX)
-plt.ylim(Y_MIN, Y_MAX)
-plt.grid()
-plt.show()
-
-"""for x in range(9):
-    stepCount+=1
-    #plt.text(x=sxpos,y=sypos,s=str(stepCount))
-    sxpos-=10
-    for i in range(10):
-        if sxpos-17<=gu_memory[0][i]<=sxpos+17 and sypos-17<=gu_memory[1][i]<=sypos+17:
-            if foundUAVno[i]!=1:
-                foundCount+=1
-            foundUAVno[i]=1"""
