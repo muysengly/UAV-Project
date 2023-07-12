@@ -130,42 +130,54 @@ for x in range(trial):
             lentmp=len(set(tmp_groupArea))
             print("inter: "+str(intersection))
             print("repeat: "+str(a))
+            #print(np.unique(tmp_groupArea))
             if np.array_equal(groupArea[a],tmp_groupArea)==1:
-                    print("case1")
+                    print("case1: the same array. Pass")
                     break
-            elif intersection>0:
-                if lengroup>lentmp:
-                    breaker=0
-                    print("case2")
-                    for b in range(10):
-                        if groupArea[a][b]==tmp_groupArea[0]:
-                            breaker=1
-                    if breaker==1:
-                        break
-                    #if groupArea[a][1]==tmp_groupArea[0]:
-                        #break
-                        #else:
-                         #   continue
-                elif lengroup<lentmp:
-                    print("case3")
-                    groupArea[a]=tmp_groupArea
-                    break
-            else:
-                groupArea[a+1]=tmp_groupArea
-                print("case4")
+            elif len(np.unique(tmp_groupArea)) == 1:
+                print("case2: tmp has only 11's. Pass")
                 break
-
-                
-
+            elif np.array_equal(groupArea[a],tmp_groupArea)==0:
+                print("case3: two are different")
+                print(len(np.intersect1d(groupArea[a],tmp_groupArea)))
+                if len(np.intersect1d(groupArea[a],tmp_groupArea))>1:
+                    print("case 3-1: there are more than one intersection")
+                    if lengroup<lentmp:
+                        print("case 3-1-1: update")
+                        groupArea[a]=tmp_groupArea
+                        break
+                    elif lengroup>lentmp:
+                        print("case 3-1-2: stay")
+                        break
+                elif len(np.intersect1d(groupArea[a],tmp_groupArea))==1:
+                    x=np.unique(groupArea[a])
+                    y=np.unique(tmp_groupArea)
+                    #print(np.unique(np.union1d(x,y)))
+                    print("case 3-2: no intersection")
+                    if len(np.unique(np.union1d(x,y)))-1==1:
+                        print("case 3-2-1: only one different. Update in empty array")
+                        groupArea[a]=tmp_groupArea
+                        break
+                    elif len(np.unique(np.union1d(x,y)))-1>1:
+                        print("case 3-2-2: two diff. Go to next array")
+                        continue
+        print(tmp_groupArea)
         print(groupArea)
 
-        n=input('continue? '+str(sxpos)+', '+str(sypos+10))
+        """n=input('continue? '+str(sxpos)+', '+str(sypos+10))
         if n=='a':
             continue
         else:
-            quit()
+            quit()"""
     sxpos-=10
-
+for a in range(10):
+     for b in range(10):
+          if a==b:
+               continue
+          else:
+            if len(np.intersect1d(groupArea[a],groupArea[b]))>1:
+                                groupArea[b]=11
+print(groupArea)
 #makeBeamCirclewDot(gu_memory[0][currentloc],gu_memory[1][currentloc],MAX_BEAM_DIAMETER,'blue')
 
 #find distance of gu-UAV
