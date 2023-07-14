@@ -96,16 +96,16 @@ for i in range(NUM_GU):
 #makeUAV(95,85,MAX_BEAM_DIAMETER,1)
 currentloc=int(df.iloc[0,2])
 
-sxpos=90
+sxpos=10
 trial = int(X_MAX/10)-1
 arrayXsize=int(X_MAX/10)
 arrayYsize=int(Y_MAX/10)
 arrayZsize=5
 groupArea=np.zeros((arrayXsize,arrayYsize,arrayZsize))+11
-print(groupArea)
 
+#initial group search
 for x in range(trial):
-    sypos=90
+    sypos=10
     for y in range(trial):
         count=0
         print("x="+str(sxpos)+", y="+str(sypos))
@@ -116,12 +116,12 @@ for x in range(trial):
                 b=int(sypos/10)-1
                 groupArea[a][b][count]=i
                 count+=1
-                print(", a="+str(a)+" b="+str(b)+" count="+str(count),end='')
+                print(", a="+str(a)+" b="+str(b)+" count="+str(count))
         print()
         plt.scatter(x=sxpos, y=sypos, c="red")
-        sypos-=10
-    sxpos-=10   
-
+        sypos+=10
+    sxpos+=10   
+print(groupArea)
 
 """n=input('continue? '+str(sxpos)+', '+str(sypos+10))
         if n=='a':
