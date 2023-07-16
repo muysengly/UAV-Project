@@ -119,9 +119,47 @@ for x in range(trial):
                 print(", a="+str(a)+" b="+str(b)+" count="+str(count))
         print()
         plt.scatter(x=sxpos, y=sypos, c="red")
+        plt.text(x=sxpos, y=sypos - 4, s=f"{len(np.unique(groupArea[int(sxpos/10)-1][int(sypos/10)-1]))-1}")
         sypos+=10
     sxpos+=10   
-print(groupArea)
+groupArea_size=np.zeros((9,9))
+for i in range(9):
+    for j in range(9):
+        groupArea_size[i][j]=len(np.unique(groupArea[i][j]))-1
+#print(len(np.unique(groupArea[8][0]))-1)
+print(groupArea_size)
+
+groupArea_maxSize=np.max(groupArea_size) #size of biggest group
+
+#find x,y location of biggest group points
+#first max start
+firstMax_size=0
+for i in range(9):
+    firstMax_size+=list(groupArea_size[i]).count(groupArea_maxSize)
+print(firstMax_size)
+
+firstMax=np.zeros((firstMax_size,2))
+firstMax_counter=0
+
+for i in range(9):
+    for j in range(9):
+        if groupArea_size[i][j]==groupArea_maxSize:
+            firstMax[firstMax_counter][0]=int(i)
+            firstMax[firstMax_counter][1]=int(j)
+            firstMax_counter+=1
+print(firstMax)
+maxGUlist=(9)
+print(firstMax_size)
+print(firstMax_counter)
+print(groupArea_maxSize)
+for i in range(firstMax_counter-1):
+    x1=int(firstMax[i][0])
+    y1=int(firstMax[i][1])
+    x2=int(firstMax[i+1][0])
+    y2=int(firstMax[i+1][1])
+    print(np.unique(np.concatenate([groupArea[x1][y1],groupArea[x2][y2]])))
+#first max end
+
 
 """n=input('continue? '+str(sxpos)+', '+str(sypos+10))
         if n=='a':
