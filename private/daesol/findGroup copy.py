@@ -148,16 +148,30 @@ for i in range(9):
             firstMax[firstMax_counter][1]=int(j)
             firstMax_counter+=1
 print(firstMax)
-maxGUlist=(9)
+maxGUlist=np.zeros(9)+11
 print(firstMax_size)
 print(firstMax_counter)
 print(groupArea_maxSize)
-for i in range(firstMax_counter-1):
-    x1=int(firstMax[i][0])
-    y1=int(firstMax[i][1])
-    x2=int(firstMax[i+1][0])
-    y2=int(firstMax[i+1][1])
-    print(np.unique(np.concatenate([groupArea[x1][y1],groupArea[x2][y2]])))
+for i in range(firstMax_counter):
+    x1=int(firstMax[i-1][0])
+    y1=int(firstMax[i-1][1])
+    len1 = len(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))
+    counter4=0
+    #x2=int(firstMax[i+1][0])
+    #y2=int(firstMax[i+1][1])
+    print(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))
+    for j in range(len1-1):
+        maxGUlist[counter4]=int(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]]))[j])
+        counter4+=1
+print(maxGUlist)
+for i in range(len(maxGUlist)-1):
+    for x in range(arrayXsize):
+        for y in range(arrayYsize):
+            for z in range(arrayZsize):
+                if groupArea[x][y][z]==maxGUlist[i]: ##maxsize의 array요소들 제외코드 삽입해야함
+                    groupArea[x][y]=11
+print(groupArea)
+        
 #first max end
 
 
