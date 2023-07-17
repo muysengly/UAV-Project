@@ -96,105 +96,113 @@ for i in range(NUM_GU):
 #makeUAV(95,85,MAX_BEAM_DIAMETER,1)
 currentloc=int(df.iloc[0,2])
 
-sxpos = 100
-sypos = 100
-trial = int(X_MAX/10)+1
-groupArea=np.zeros((10,10))+11
-bigcounter=0
-counter1=0
-counter2=0
-testset=[6,5,4,11,11,11,11]
-uavspot=np.zeros((10,2))
+sxpos=10
+trial = int(X_MAX/10)-1
+arrayXsize=int(X_MAX/10)
+arrayYsize=int(Y_MAX/10)
+arrayZsize=7
+groupArea=np.zeros((arrayXsize,arrayYsize,arrayZsize))+11
+
+#initial group search
 for x in range(trial):
-    sypos=100
+    sypos=10
     for y in range(trial):
-        counter1=0
-        tmp_groupArea=np.zeros(10)+11
+        count=0
+        print("x="+str(sxpos)+", y="+str(sypos))
         for i in range(10):
             if sxpos-MAX_BEAM_RADIUS<=gu_memory[0][i]<=sxpos+MAX_BEAM_RADIUS and sypos-MAX_BEAM_RADIUS<=gu_memory[1][i]<=sypos+MAX_BEAM_RADIUS:
-                #print(str(i)+", ",end='')
-                tmp_groupArea[counter1]=int(i)
-                counter1+=1
+                print(str(i)+", ",end='')
+                a=int(sxpos/10)-1
+                b=int(sypos/10)-1
+                groupArea[a][b][count]=i
+                count+=1
+                print(", a="+str(a)+" b="+str(b)+" count="+str(count))
         print()
+        plt.scatter(x=sxpos, y=sypos, c="red")
+        plt.text(x=sxpos, y=sypos - 4, s=f"{len(np.unique(groupArea[int(sxpos/10)-1][int(sypos/10)-1]))-1}")
+        sypos+=10
+    sxpos+=10   
+groupArea_size=np.zeros((9,9))
+for i in range(9):
+    for j in range(9):
+        groupArea_size[i][j]=len(np.unique(groupArea[i][j]))-1
+#print(len(np.unique(groupArea[8][0]))-1)
+print(groupArea_size)
+
+groupArea_maxSize=np.max(groupArea_size) #size of biggest group
+
+#find x,y location of biggest group points
+#first max start
+firstMax_size=0
+for i in range(9):
+    firstMax_size+=list(groupArea_size[i]).count(groupArea_maxSize)
+print(firstMax_size)
+
+firstMax=np.zeros((firstMax_size,2))
+firstMax_counter=0
+
+for i in range(9):
+    for j in range(9):
+        if groupArea_size[i][j]==groupArea_maxSize:
+            firstMax[firstMax_counter][0]=int(i)
+            firstMax[firstMax_counter][1]=int(j)
+            firstMax_counter+=1
+print(firstMax)
+maxGUlist=np.zeros(9)+11
+print(firstMax_size)
+print(firstMax_counter)
+print(groupArea_maxSize)
+for i in range(firstMax_counter):
+    x1=int(firstMax[i][0])
+    y1=int(firstMax[i][1])
+    len1 = len(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))
+    counter4=0
+    #x2=int(firstMax[i+1][0])
+    #y2=int(firstMax[i+1][1])
+    #print(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))
+    print("previous:"+str(maxGUlist)+", "+str(groupArea[x1][y1])+" = "+str((np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))))
+    tmpList=np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]]))
+    for j in range(len1-1):
+        print(maxGUlist)
+        maxGUlist[j]=tmpList[j]
+        counter4+=1
+     
         
-        print(str(sxpos)+", "+str(sypos))
-        for a in range(10):
-            intersection=len(set(groupArea[a])^set(tmp_groupArea))
-            lengroup=len(set(groupArea[a]))
-            lentmp=len(set(tmp_groupArea))
-            print("inter: "+str(intersection))
-            print("repeat: "+str(a))
-            #print(np.unique(tmp_groupArea))
-            if np.array_equal(groupArea[a],tmp_groupArea)==1:
-                    print("case1: the same array. Pass")
-                    break
-            elif len(np.unique(tmp_groupArea)) == 1:
-                print("case2: tmp has only 11's. Pass")
-                break
-            elif np.array_equal(groupArea[a],tmp_groupArea)==0:
-                print("case3: two are different")
-                print(len(np.intersect1d(groupArea[a],tmp_groupArea)))
-                if len(np.intersect1d(groupArea[a],tmp_groupArea))>1:
-                    print("case 3-1: there are more than one intersection")
-                    if lengroup<lentmp:
-                        print("case 3-1-1: update")
-                        groupArea[a]=tmp_groupArea
-                        uavspot[a][0]=sxpos
-                        uavspot[a][1]=sypos
-                        print(uavspot[a])
-                        break
-                    elif lengroup>lentmp:
-                        print("case 3-1-2: stay")
-                        break
-                elif len(np.intersect1d(groupArea[a],tmp_groupArea))==1:
-                    x=np.unique(groupArea[a])
-                    y=np.unique(tmp_groupArea)
-                    print("case 3-2: no intersection")
-                    if len(np.unique(np.union1d(x,y)))-1==1:
-                        print("case 3-2-1: only one different. Update in empty array")
-                        groupArea[a]=tmp_groupArea
-                        uavspot[a][0]=sxpos
-                        uavspot[a][1]=sypos
-                        print(uavspot[a])
-                        break
-                    elif len(np.unique(np.union1d(x,y)))-1>1:
-                        print("case 3-2-2: two diff. Go to next array")
+print(maxGUlist)
+print(groupArea)
+for i in range(len(np.unique(maxGUlist))-1):
+    for x in range(arrayXsize):
+        for y in range(arrayYsize):
+            for z in range(arrayZsize):
+                if groupArea[x][y][z]==maxGUlist[i] and (len(np.unique(groupArea[x][y]))-1)!=groupArea_maxSize: ##maxsize의 array요소들 제외코드 삽입해야함
+                    """print("x:"+str(x)+", y:"+str(y)+", z:"+str(z))
+                    print("length of unique groupArea: "+str(len(np.unique(groupArea[x][y]))))
+                    print("groupArea_Maxsize:"+str(groupArea_maxSize))
+                    print(groupArea[x])
+                    print("xyz: "+str(groupArea[x][y][z])+", i="+str(i))
+                    print("maxGU: "+str(maxGUlist[i]))"""
+                    groupArea[x][y]=11
+
+                    """n=input('continue? '+str(sxpos)+', '+str(sypos+10))
+                    if n=='a':
                         continue
-        print(tmp_groupArea)
-        print(groupArea)
-        #print(uavspot)
-        sypos-=10
-        """n=input('continue? '+str(sxpos)+', '+str(sypos+10))
+                    else:
+                        quit()"""
+                    #0,1,6,8
+print(groupArea)
+        
+#first max end
+
+
+"""n=input('continue? '+str(sxpos)+', '+str(sypos+10))
         if n=='a':
             continue
         else:
             quit()"""
-        
-    sxpos-=10
-"""for a in range(10):
-     for b in range(10):
-          if a==b:
-               continue
-          else:
-            if len(np.intersect1d(groupArea[a],groupArea[b]))>1:
-                                groupArea[b]=11
-                                uavspot[b][0]=0
-                                uavspot[b][1]=0"""
-print(groupArea)
-print(uavspot)
-countareas=10
-#for count in range(10):
-#     if np.array_equal(groupArea[count],[11,11,11,11,11,11,11,11,11,11])==0:
-#          countareas+=1
-print(countareas)
-for count2 in range(countareas):
-    makeBeamCirclewDot(uavspot[count2][0],uavspot[count2][1],MAX_BEAM_DIAMETER,'skyblue')
-print(MAX_BEAM_RADIUS)
-#find distance of gu-UAV
-count12=1
-nextloc=0
-guUAVdistanceSum=0
-stackcount=0
+
+#makeBeamCirclewDot(uavspot[count2][0],uavspot[count2][1],MAX_BEAM_DIAMETER,'skyblue')
+
+
  
 
 
