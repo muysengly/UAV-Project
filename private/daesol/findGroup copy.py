@@ -100,7 +100,7 @@ sxpos=10
 trial = int(X_MAX/10)-1
 arrayXsize=int(X_MAX/10)
 arrayYsize=int(Y_MAX/10)
-arrayZsize=5
+arrayZsize=7
 groupArea=np.zeros((arrayXsize,arrayYsize,arrayZsize))+11
 
 #initial group search
@@ -153,16 +153,21 @@ print(firstMax_size)
 print(firstMax_counter)
 print(groupArea_maxSize)
 for i in range(firstMax_counter):
-    x1=int(firstMax[i-1][0])
-    y1=int(firstMax[i-1][1])
+    x1=int(firstMax[i][0])
+    y1=int(firstMax[i][1])
     len1 = len(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))
     counter4=0
     #x2=int(firstMax[i+1][0])
     #y2=int(firstMax[i+1][1])
-    print(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))
+    #print(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))
+    print("previous:"+str(maxGUlist)+", "+str(groupArea[x1][y1])+" = "+str((np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]])))))
+    tmpList=np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]]))
     for j in range(len1-1):
-        maxGUlist[counter4]=int(np.unique(np.concatenate([maxGUlist,groupArea[x1][y1]]))[j])
+        print(maxGUlist)
+        maxGUlist[j]=tmpList[j]
         counter4+=1
+     
+        
 print(maxGUlist)
 print(groupArea)
 for i in range(len(np.unique(maxGUlist))-1):
