@@ -45,9 +45,17 @@ def makeBeamCirclewDot(xpos,ypos,maxbeam,color):
     uav_beam = ax.add_patch(beam_circle)
     plt.scatter(xpos,ypos, c="yellow")
 
+def calc_rx_power(d):
+    # received power [mWh]
+    return 1*10**((TX_POWER - (20*np.log10((4*np.pi*d*F)/C)))/10) * 1000
+
 #intial parameter
 NUM_GU = 10  # number of ground users
+TX_POWER = 32  # transmit power [dBm]
+F = 1e9  # frequency 1GH [Hz]
+C = 299792458  # speed of light [m/s]
 
+UAV_TX_POWER = 30  # uav's transmit power in [dBm]
 X_MIN = 0  # minimum x-axis [meter]
 X_MAX = 100  # maximum x-axis [meter]
 Y_MIN = 0  # minimum y-axis [meter]
@@ -88,11 +96,16 @@ GRID
 fig, ax = plt.subplots(figsize=(6, 6))
 
 guUAVdistance=np.zeros(10)
-
+current_batt = []
 for i in range(NUM_GU):
+    ax.scatter(x=gu_memory[0][i], y=gu_memory[1][i], c="blue")
+    ax.text(x=gu_memory[0][i] - 3.5, y=gu_memory[1][i] - 4, s=f"GU-{i}")
+    current_batt.append(
+        ax.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]:.2f}mWs"))
+"""for i in range(NUM_GU):
     plt.scatter(x=gu_memory[0][i], y=gu_memory[1][i], c="blue")
     plt.text(x=gu_memory[0][i] - 3.5, y=gu_memory[1][i] - 4, s=f"GU-{i}")
-    plt.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]}mWh")
+    plt.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]}mWh")"""
 
 gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 gu_xyz = np.array((gu_memory[0],gu_memory[1],gu_z)).T
@@ -122,10 +135,37 @@ print(clusterNum)
 #finding groups end
 
 #code related to charge start
+#distanceAB=(((gu_memory[0][nextloc]-gu_memory[0][currentloc])**2)+((gu_memory[1][nextloc]-gu_memory[1][currentloc])**2))**(1/2) 
+
+"""for i in range(clusterNum):
+    n=input('continue?')
+    if n=='a':
+        print(i)
+        makeBeamCirclewDot(centers[i][0],centers[i][1],MAX_BEAM_DIAMETER,'orange')
+        plt.text(x=centers[i][0] + 3.5, y=centers[i][1] + 4, s=f"UAV state-{i}")
+    else:
+        quit()
+"""
+distancesFromNow = np.zeros(clusterNum)
+currentXYloc=np.zeros(2)+50
 for i in range(clusterNum):
-    makeBeamCirclewDot(centers[i][0],centers[i][1],MAX_BEAM_DIAMETER,'orange')
+    distancesFromNow[i]=(((centers[i][0] - currentXYloc[0])**2)+((centers[i][1] - currentXYloc[1])**2))**(1/2) 
 
+print(distancesFromNow)
+print(np.argmin(distancesFromNow))
+nextloc=np.argmin(distancesFromNow)
 
+currentXYloc=centers[nextloc]
+print(currentXYloc)
+time1=5
+for t in range(time1):
+    for k in range(10):
+        if currentXYloc[0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=currentXYloc[0]+MAX_BEAM_RADIUS and currentXYloc[1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=currentXYloc[1]+MAX_BEAM_RADIUS:
+            print(k)
+            distance1=(((gu_memory[0][k] - currentXYloc[0])**2)+((gu_memory[0][k] - currentXYloc[1])**2))**(1/2)
+            gu_bat[k]+=calc_rx_power(distance1)
+            current_batt[k].remove()
+            current_batt[k] = ax.text(x=gu_memory[0][k] - 6, y=gu_memory[1][k] - 7, s=f"{gu_bat[k]:.2f}mWs")
 
 
 plt.xlabel("x-axis [m]")
