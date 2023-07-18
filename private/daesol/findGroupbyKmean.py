@@ -157,15 +157,18 @@ nextloc=np.argmin(distancesFromNow)
 
 currentXYloc=centers[nextloc]
 print(currentXYloc)
-time1=5
-for t in range(time1):
-    for k in range(10):
-        if currentXYloc[0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=currentXYloc[0]+MAX_BEAM_RADIUS and currentXYloc[1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=currentXYloc[1]+MAX_BEAM_RADIUS:
-            print(k)
-            distance1=(((gu_memory[0][k] - currentXYloc[0])**2)+((gu_memory[0][k] - currentXYloc[1])**2))**(1/2)
+time1=0
+
+for k in range(10):
+    if currentXYloc[0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=currentXYloc[0]+MAX_BEAM_RADIUS and currentXYloc[1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=currentXYloc[1]+MAX_BEAM_RADIUS:
+        print(k)
+        distance1=(((gu_memory[0][k] - currentXYloc[0])**2)+((gu_memory[0][k] - currentXYloc[1])**2))**(1/2)
+        while gu_bat[k]<100:
             gu_bat[k]+=calc_rx_power(distance1)
             current_batt[k].remove()
             current_batt[k] = ax.text(x=gu_memory[0][k] - 6, y=gu_memory[1][k] - 7, s=f"{gu_bat[k]:.2f}mWs")
+            time1+=1
+print(time1)
 
 
 plt.xlabel("x-axis [m]")
