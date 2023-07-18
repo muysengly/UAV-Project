@@ -119,8 +119,12 @@ for i in range(1,9):
 print(centers)
 print(clusterNum)
 
+#finding groups end
+
+#code related to charge start
 for i in range(clusterNum):
     makeBeamCirclewDot(centers[i][0],centers[i][1],MAX_BEAM_DIAMETER,'orange')
+
 
 
 
