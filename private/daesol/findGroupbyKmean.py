@@ -9,6 +9,8 @@ import matplotlib.patches as mpatches
 import openpyxl as xl
 import pandas as pd
 from scipy.spatial import distance_matrix
+from sklearn.cluster import KMeans
+from IPython.display import display, clear_output
 
 def has_duplicates(seq):
     return len(seq) != len(set(seq))
@@ -92,9 +94,17 @@ for i in range(NUM_GU):
     plt.text(x=gu_memory[0][i] - 3.5, y=gu_memory[1][i] - 4, s=f"GU-{i}")
     plt.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]}mWh")
 
+gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+gu_xyz = np.array((gu_memory[0],gu_memory[1],gu_z)).T
 
-#makeUAV(95,85,MAX_BEAM_DIAMETER,1)
-currentloc=int(df.iloc[0,2])
+kmeans = KMeans(
+    n_clusters=7,
+    n_init="auto"
+).fit(gu_xyz)
+
+centers = kmeans.cluster_centers_
+clear_output(False)
+print(centers)
 
 
 
