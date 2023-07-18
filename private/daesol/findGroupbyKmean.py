@@ -97,7 +97,7 @@ for i in range(NUM_GU):
 gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 gu_xyz = np.array((gu_memory[0],gu_memory[1],gu_z)).T
 countA=np.zeros(10)
-for i in range(9):
+for i in range(1,9):
     kmeans = KMeans(
         n_clusters=i,
         n_init="auto"
@@ -106,8 +106,10 @@ for i in range(9):
     clear_output(False)
     for j in range(i):
         for k in range(10):
-            if centers[j][0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=centers[j][0]+MAX_BEAM_RADIUS and centers[j][1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=centers[j][1]+MAX_BEAM_RADIUS
+            if centers[j][0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=centers[j][0]+MAX_BEAM_RADIUS and centers[j][1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=centers[j][1]+MAX_BEAM_RADIUS:
                 countA[k]=1
+    print(centers)
+    print(countA)
 print(centers)
 print()
 
