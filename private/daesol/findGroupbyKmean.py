@@ -146,6 +146,7 @@ print(clusterNum)
     else:
         quit()
 """
+#first step
 distancesFromNow = np.zeros(clusterNum)
 currentXYloc=np.zeros(2)+50
 for i in range(clusterNum):
@@ -156,19 +157,25 @@ print(np.argmin(distancesFromNow))
 nextloc=np.argmin(distancesFromNow)
 
 currentXYloc=centers[nextloc]
+currentXYloc=100 #edit-------------------------------------------------
+
 print(currentXYloc)
-time1=0
+time1=np.zeros(10)
 
 for k in range(10):
     if currentXYloc[0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=currentXYloc[0]+MAX_BEAM_RADIUS and currentXYloc[1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=currentXYloc[1]+MAX_BEAM_RADIUS:
         print(k)
         distance1=(((gu_memory[0][k] - currentXYloc[0])**2)+((gu_memory[0][k] - currentXYloc[1])**2))**(1/2)
+        print("distance: "+str(distance1))
         while gu_bat[k]<100:
             gu_bat[k]+=calc_rx_power(distance1)
-            current_batt[k].remove()
-            current_batt[k] = ax.text(x=gu_memory[0][k] - 6, y=gu_memory[1][k] - 7, s=f"{gu_bat[k]:.2f}mWs")
-            time1+=1
+            time1[k]+=1
+        current_batt[k].remove()
+        current_batt[k] = ax.text(x=gu_memory[0][k] - 6, y=gu_memory[1][k] - 7, s=f"{gu_bat[k]:.2f}mWs")
+        print(time1[k])
 print(time1)
+#first step end 
+
 
 
 plt.xlabel("x-axis [m]")
