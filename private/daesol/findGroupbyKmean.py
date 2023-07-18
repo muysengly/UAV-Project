@@ -97,6 +97,7 @@ for i in range(NUM_GU):
 gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 gu_xyz = np.array((gu_memory[0],gu_memory[1],gu_z)).T
 countA=np.zeros(10)
+clusterNum=0
 for i in range(1,9):
     kmeans = KMeans(
         n_clusters=i,
@@ -108,10 +109,18 @@ for i in range(1,9):
         for k in range(10):
             if centers[j][0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=centers[j][0]+MAX_BEAM_RADIUS and centers[j][1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=centers[j][1]+MAX_BEAM_RADIUS:
                 countA[k]=1
+    print("cluster num= "+str(i))
     print(centers)
     print(countA)
+    if np.sum(countA)==10:
+        clusterNum=i
+        break
+
 print(centers)
-print()
+print(clusterNum)
+
+for i in range(clusterNum):
+    makeBeamCirclewDot(centers[i][0],centers[i][1],MAX_BEAM_DIAMETER,'orange')
 
 
 
