@@ -152,12 +152,14 @@ currentXYloc=np.zeros(2)+50
 for i in range(clusterNum):
     distancesFromNow[i]=(((centers[i][0] - currentXYloc[0])**2)+((centers[i][1] - currentXYloc[1])**2))**(1/2) 
 
+
 print(distancesFromNow)
 print(np.argmin(distancesFromNow))
-nextloc=np.argmin(distancesFromNow)
+nextloc=np.argmax(distancesFromNow)
+#distancesFromNow[nextloc]=100
+#nextloc=np.argmin(distancesFromNow)
 
 currentXYloc=centers[nextloc]
-currentXYloc=100 #edit-------------------------------------------------
 
 print(currentXYloc)
 time1=np.zeros(10)
