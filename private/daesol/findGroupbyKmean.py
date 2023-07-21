@@ -146,6 +146,7 @@ print(clusterNum)
     else:
         quit()
 """
+
 #first step
 distancesFromNow = np.zeros(clusterNum)
 currentXYloc=np.zeros(2)+50
@@ -167,11 +168,20 @@ time1=np.zeros(10)
 for k in range(10):
     if currentXYloc[0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=currentXYloc[0]+MAX_BEAM_RADIUS and currentXYloc[1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=currentXYloc[1]+MAX_BEAM_RADIUS:
         print(k)
-        distance1=(((gu_memory[0][k] - currentXYloc[0])**2)+((gu_memory[0][k] - currentXYloc[1])**2))**(1/2)
+        distance1=(((gu_memory[0][k] - currentXYloc[0])**2)+((gu_memory[1][k] - currentXYloc[1])**2)+100)**(1/2)
         print("distance: "+str(distance1))
         while gu_bat[k]<100:
             gu_bat[k]+=calc_rx_power(distance1)
             time1[k]+=1
+            #print("gumemory="+str(gu_memory[0][k]+", "+str(gu_memory))
+            print(str(time1)+"second")
+            #print(str(distance1)+"m, rx_power="+str(calc_rx_power(distance1)))
+            print(str(gu_bat[k])+"mWs")
+            n=input('continue?')
+            if n=='a':
+                #plt.text(x=centers[i][0] + 3.5, y=centers[i][1] + 4, s=f"UAV state-{i}")
+            else:
+                quit()
         current_batt[k].remove()
         current_batt[k] = ax.text(x=gu_memory[0][k] - 6, y=gu_memory[1][k] - 7, s=f"{gu_bat[k]:.2f}mWs")
         print(time1[k])
