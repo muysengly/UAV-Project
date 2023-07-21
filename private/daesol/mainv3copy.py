@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import matplotlib.patches as mpatches
@@ -22,6 +23,7 @@ UAV_SPEED = 6 # uav speed [m/s]
 
 # calculate maximum beamforming diameter [meter]
 MAX_BEAM_DIAMETER = 2 * UAV_ALTITUDE * np.tan(MAX_BEAM_ANGLE * np.pi / 180)
+MAX_BEAM_RADIUS = MAX_BEAM_DIAMETER/2
 
 # calculate maximum distance between uav and gu [meter]
 MAX_BEAM_DISTANCE = UAV_ALTITUDE / np.cos(MAX_BEAM_ANGLE * np.pi / 180)
@@ -40,19 +42,19 @@ def calc_rx_power(d):
     # received power [mWh]
     return 1*10**((TX_POWER - (20*np.log10((4*np.pi*d*F)/C)))/10) * 1000
     # generate ground user location randomly x,y,z [meters]
-gu_x = np.random.uniform(low=X_MIN, high=X_MAX, size=(NUM_GU,))
-gu_y = np.random.uniform(low=Y_MIN, high=Y_MAX, size=(NUM_GU,))
-gu_z = np.zeros((NUM_GU,))
 
-gu_x = np.array([
-    9.04330840e+01, 9.96817955e+01, 7.63398634e+01, 8.98037139e+01, 7.22245261e+01, 
-    8.36605843e+01, 10.27225613e-0, 4.05986793e+01, 5.80821532e+01, 9.93099118e+01
-])
+#call information from excel
+gu_memory=np.ones((2,NUM_GU))
+df=pd.read_excel('locationInformation.xlsx')
+for x in range(2):
+    for y in range(10):
+        gu_memory[x][y]=int(df.iloc[y+1,x])
+print(gu_memory)
 
-gu_y = np.array([
-    13.73014649e+0, 78.77941627, 60.47122501, 71.19842815, 70.31373701, 
-    77.84923832, 60.52589075, 10.41285009, 85.11544206, 46.38436827
-])
+
+gu_x = gu_memory[0]
+
+gu_y = gu_memory[1]
 
 gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 
@@ -61,14 +63,37 @@ gu_xyz = np.array((gu_x,gu_y,gu_z)).T
 gu_xyz
 # i use k-mean algorithm 
 # to find the center with 7 cluster-head
-kmeans = KMeans(
+"""kmeans = KMeans(
     n_clusters=7,
     n_init="auto"
 ).fit(gu_xyz)
 
 centers = kmeans.cluster_centers_
 clear_output(False)
+"""
+countA=np.zeros(10)
+clusterNum=0
+RADIUS_FOR_KMEAN=MAX_BEAM_RADIUS #17m(radius) - x(constant)
+for i in range(1,9):
+    kmeans = KMeans(
+        n_clusters=i,
+        n_init="auto"
+    ).fit(gu_xyz)
+    centers = kmeans.cluster_centers_
+    clear_output(False)
+    for j in range(i):
+        for k in range(10):
+            if centers[j][0]-RADIUS_FOR_KMEAN<=gu_memory[0][k]<=centers[j][0]+RADIUS_FOR_KMEAN and centers[j][1]-RADIUS_FOR_KMEAN<=gu_memory[1][k]<=centers[j][1]+RADIUS_FOR_KMEAN:
+                countA[k]=1
+    print("cluster num= "+str(i))
+    print(centers)
+    print(countA)
+    if np.sum(countA)==10:
+        clusterNum=i
+        break
 
+print(centers)
+print(clusterNum)
 centers
 # insert the center of the map as initial point 
 points = np.vstack(([[50, 50]], centers[:, 0:2]))
@@ -172,6 +197,10 @@ for i in range(NUM_GU):
     ax.text(x=gu_x[i] - 3.5, y=gu_y[i] - 4, s=f"GU-{i}")
     current_batt.append(
         ax.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]:.2f}mWs"))
+
+#charge station
+ax.scatter(x=50,y=50,c="yellow")
+ax.text(x=50-5, y=50 - 4, s="Charge")
 
 # plot real time update trajectory
 for t in range(len(uav_time) - 1):
