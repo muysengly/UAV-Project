@@ -9,7 +9,7 @@ z=np.zeros((10,2))
 z=[[2, 2, 4, 4, 3, 2, 1, 0, 0],
    [4, 3, 2, 1, 2, 3, 4, 4, 0]]
 
-#print(np.unique(np.union1d(x,y)))
+#print(np.unique(np.union1d(x,y))) 
 print(z[0].count(int(4)))
 
 
