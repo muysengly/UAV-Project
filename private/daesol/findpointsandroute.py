@@ -71,7 +71,7 @@ X_GRID = 10  # number of x grid
 Y_GRID = 10  # number of y grid
 UAV_TX_POWER = 30  # uav's transmit power in [dBm]
 
-MAX_UAV_BATTERY=450 #uav's battery; 500mW
+MAX_UAV_BATTERY=800 #uav's battery; 500mW
 UAV_SPEED = 6 #[m/s]
 UAV_MOVE= 10 #10mWs when moving
 UAV_HOV= 5 # 5mWs when hovering
@@ -97,10 +97,13 @@ gu_x = gu_memory[0]
 gu_y = gu_memory[1]
 gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 gu_xyz = np.array((gu_x,gu_y,gu_z)).T
+
+current_batt = []
 for i in range(NUM_GU):
-    plt.scatter(x=gu_x[i], y=gu_y[i], c="blue")
-    plt.text(x=gu_x[i] - 3.5, y=gu_y[i] - 4, s=f"GU-{i}")
-    plt.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]}mWh")
+    ax.scatter(x=gu_x[i], y=gu_y[i], c="blue")
+    ax.text(x=gu_x[i] - 3.5, y=gu_y[i] - 4, s=f"GU-{i}")
+    current_batt.append(
+        ax.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]}mWh"))
 
 countA=np.zeros(10)
 clusterNum=0
@@ -129,6 +132,7 @@ for i in range(1,10):
 print(centers)
 print(clusterNum)
 print("count:"+str(countA))
+print("----------------------------------")
 
 centers=np.vstack(([[50, 50]], centers[:, 0:2]))
 centers=[[50, 50],
@@ -143,32 +147,66 @@ for i in range(len(centers)):
     plt.text(x=centers[i][0] - 1.5, y=centers[i][1] + 2, s=f"C-{i}")
 
 #distances
+route=[]
 currentloc=0
-previousloc=0
 currentlocXY=np.zeros(2)
 currentlocXY=centers[currentloc]
-battp2p=0
 currentbatt=MAX_UAV_BATTERY
-
+gucounter=0
 distances=np.zeros(len(centers))
-distances[0]=9999
-for i in range(1,len(centers)):
-    if i == currentloc:
-        distances[i]=9999
-    else:
-        distances[i]=distance3d(centers,currentloc,i)
-currentloc=np.argmin(distances)
-currentlocXY=centers[currentloc]
-battp2p=(np.min(distances)/UAV_SPEED)*UAV_MOVE
-currentbatt-=battp2p
+route.append(0)
+for a in range(3):
+    distances[0]=9999
+    batt4p2p=0
+    batt4hov=0
+    batt4txpw=0
+    gucounter=0
+
+    #move to next point
+    for i in range(1,len(centers)):
+        if i == currentloc:
+            distances[i]=9999
+        elif np.any(np.in1d(route,i))==1:
+            distances[i]=9999
+        else:
+            distances[i]=distance3d(centers,currentloc,i)
+    currentloc=np.argmin(distances)
+    currentlocXY=centers[currentloc]
+    route.append(currentloc)
+    batt4p2p=(np.min(distances)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
+
+    currentbatt-=batt4p2p
+    #check how many GU's are there inside beam circle
+    for k in range(10):
+        if centers[currentloc][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[currentloc][0]+RADIUS_FOR_KMEAN and centers[currentloc][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[currentloc][1]+RADIUS_FOR_KMEAN and gu_bat[k]!=100:
+            gucounter+=1
+            gu_bat[k]=100
+            current_batt[k].remove()
+            current_batt[k] = ax.text(
+                x=gu_x[k] - 6, y=gu_y[k] - 7, s=f"{gu_bat[k]:.2f}mWs")
+        
+    batt4hov=1*UAV_HOV # x second * power used for hovering 
+    batt4txpw=gucounter*100 # number of GU's inside Beam * power used for trasmitting power
+    currentbatt-=(batt4hov+batt4txpw) 
+
+    print("distances: "+str(distances))
+    print("centers: "+str(centers))
+    print("currentlocXY: "+str(currentlocXY))
+    print("currentloc:"+str(currentloc))
+    print("batt4 p2p: "+str(batt4p2p)+", hov:"+str(batt4hov)+", txpw:"+str(batt4txpw))
+    print("UAV battery: "+str(currentbatt))
+    print("routes: "+str(route))
+    print("---------------------------------------")
 
 
-print("distances: "+str(distances))
-print("centers: "+str(centers))
-print("currentlocXY: "+str(currentlocXY))
-print("currentloc:"+str(currentloc))
-print("power used in moving: "+str(battp2p))
-print("UAV battery: "+str(currentbatt))
+#drawing
+for i in range(len(route)-1):
+    x_vals = [centers[int(route[i])][0], centers[int(route[i + 1])][0]]
+    y_vals = [centers[int(route[i])][1], centers[int(route[i + 1])][1]]
+    plt.plot(x_vals, y_vals, color=color[i])
+
+
+
 
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")

@@ -8,9 +8,13 @@ y=np.unique(tmp)
 z=np.zeros((10,2))
 z=[[2, 2, 4, 4, 3, 2, 1, 0, 0],
    [4, 3, 2, 1, 2, 3, 4, 4, 0]]
+route = [0, 2,3,2, 4]
 
 #print(np.unique(np.union1d(x,y))) 
-print(z[0].count(int(4)))
-
+print(np.in1d(route,2))
+if np.any(np.in1d(route,2))==1:
+    print("ss")
+else:
+    print("zz")
 
 
