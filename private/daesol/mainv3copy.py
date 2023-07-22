@@ -74,66 +74,25 @@ clear_output(False)
 countA=np.zeros(10)
 clusterNum=0
 RADIUS_FOR_KMEAN=MAX_BEAM_RADIUS #17m(radius) - x(constant)
-for i in range(1,9):
-    kmeans = KMeans(
-        n_clusters=i,
-        n_init="auto"
-    ).fit(gu_xyz)
-    centers = kmeans.cluster_centers_
-    clear_output(False)
-    for j in range(i):
-        for k in range(10):
-            if centers[j][0]-RADIUS_FOR_KMEAN<=gu_memory[0][k]<=centers[j][0]+RADIUS_FOR_KMEAN and centers[j][1]-RADIUS_FOR_KMEAN<=gu_memory[1][k]<=centers[j][1]+RADIUS_FOR_KMEAN:
-                countA[k]=1
-    print("cluster num= "+str(i))
-    print(centers)
-    print(countA)
-    if np.sum(countA)==10:
-        clusterNum=i
-        break
 
-print(centers)
-print(clusterNum)
-centers
-# insert the center of the map as initial point 
-points = np.vstack(([[50, 50]], centers[:, 0:2]))
+kmeans = KMeans(
+    n_clusters=7,
+    n_init="auto"
+).fit(gu_xyz)
+centers = kmeans.cluster_centers_
+clear_output(False)
+ 
 
-# i use frigidum package to find the optimal route
-# can be used DAESOL's algorithm
-tsp.nodes = points
-tsp.nodes_count = len(points)
-tsp.dist_eu = distance_matrix(points, points)
+points=np.array([[50,50],
+        [34, 37], 
+         [89, 20],
+         [25.5, 82.5], 
+         [2, 9],
+         [1, 38],
+         [25, 1],
+         [51, 19]])
 
-local_opt = frigidum.sa(
-    random_start=tsp.random_start,
-    objective_function=tsp.objective_function,
-    neighbours=[
-        tsp.euclidian_bomb_and_fix,
-        tsp.euclidian_nuke_and_fix,
-        tsp.route_bomb_and_fix,
-        tsp.route_nuke_and_fix,
-    ],
-    copy_state=frigidum.annealing.naked,
-    T_start=5,
-    alpha=.8,
-    T_stop=0.01,
-    repeats=10**2,
-    post_annealing=tsp.local_search_2opt
-)
-
-#bookmark1
-
-test1=[1,2,3,5,4,6,7,0]#reverse
-# get the route variable 
-tmp_route =local_opt[0]
-print(local_opt)
-print("centers: "+str(centers))
-
-# make the loop by adding the starting point 
-# as the end point
-route = np.append(
-    np.roll(tmp_route, -np.squeeze(np.argwhere(tmp_route == 0))), 0)
-
+route=[1,0,2,3,4,5,6,7,0]
 print(route)
 # calculate flying direction vectors
 direction = {}
