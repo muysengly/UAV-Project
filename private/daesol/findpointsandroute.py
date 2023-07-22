@@ -54,61 +54,73 @@ NUM_GU = 10  # number of ground users
 TX_POWER = 32  # transmit power [dBm]
 F = 1e9  # frequency 1GH [Hz]
 C = 299792458  # speed of light [m/s]
-
 UAV_TX_POWER = 30  # uav's transmit power in [dBm]
 X_MIN = 0  # minimum x-axis [meter]
 X_MAX = 100  # maximum x-axis [meter]
 Y_MIN = 0  # minimum y-axis [meter]
 Y_MAX = 100  # maximum y-axis [mseter]
-
 UAV_ALTITUDE = 10  # altitude of uav [meter]
 MAX_BEAM_ANGLE = 60  # maximum beamforming angle [degree]
-
 # maximum beamforming diameter [meter]
 MAX_BEAM_DIAMETER = 2*UAV_ALTITUDE*np.tan(MAX_BEAM_ANGLE*np.pi/180)
 MAX_BEAM_RADIUS = MAX_BEAM_DIAMETER/2
-
 X_GRID = 10  # number of x grid
 Y_GRID = 10  # number of y grid
-
-
 UAV_TX_POWER = 30  # uav's transmit power in [dBm]
-
 #initial variables
 t = 0  # time [seconds]
-
 gu_bat = np.zeros((NUM_GU,)) # battery of ground user [mWh]
-
-#call information from excel
-gu_memory=np.ones((2,10))
-df=pd.read_excel('locationInformation.xlsx')
-for x in range(2):
-    for y in range(10):
-        gu_memory[x][y]=int(df.iloc[y+1,x])
-print(gu_memory)
-
 # generate meshgrid
 tmp_x = np.linspace(X_MIN + X_GRID/2,X_MAX-X_GRID/2,X_GRID)
 tmp_y = np.linspace(Y_MIN + Y_GRID/2,Y_MAX-Y_GRID/2,Y_GRID)
 GRID = np.array(np.meshgrid(tmp_x, tmp_y))
-
 GRID
+color=["red","orange","yellow","green","olive","blue","skyblue","violet","brown","pink"]
+
 fig, ax = plt.subplots(figsize=(6, 6))
 
-guUAVdistance=np.zeros(10)
-current_batt = []
-for i in range(NUM_GU):
-    ax.scatter(x=gu_memory[0][i], y=gu_memory[1][i], c="blue")
-    ax.text(x=gu_memory[0][i] - 3.5, y=gu_memory[1][i] - 4, s=f"GU-{i}")
-    current_batt.append(
-        ax.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]:.2f}mWs"))
-"""for i in range(NUM_GU):
-    plt.scatter(x=gu_memory[0][i], y=gu_memory[1][i], c="blue")
-    plt.text(x=gu_memory[0][i] - 3.5, y=gu_memory[1][i] - 4, s=f"GU-{i}")
-    plt.text(x=gu_memory[0][i] - 6, y=gu_memory[1][i] - 7, s=f"{gu_bat[i]}mWh")"""
-
+gu_memory=np.ones((2,NUM_GU))
+df=pd.read_excel('locationInformation.xlsx')
+for x in range(2):
+    for y in range(10):
+        gu_memory[x][y]=int(df.iloc[y+1,x])
+gu_x = gu_memory[0]
+gu_y = gu_memory[1]
 gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
-gu_xyz = np.array((gu_memory[0],gu_memory[1],gu_z)).T
+gu_xyz = np.array((gu_x,gu_y,gu_z)).T
+for i in range(NUM_GU):
+    plt.scatter(x=gu_x[i], y=gu_y[i], c="blue")
+    plt.text(x=gu_x[i] - 3.5, y=gu_y[i] - 4, s=f"GU-{i}")
+    plt.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]}mWh")
+
+clusterNum=7
+kmeans = KMeans(
+    n_clusters=clusterNum,
+    n_init="auto"
+).fit(gu_xyz)
+centers = kmeans.cluster_centers_
+clear_output(False)
+centers=centers[:,0:2]
+
+for i in range(clusterNum):
+    plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
+    plt.text(x=centers[i][0] - 1.5, y=centers[i][1] + 2, s=f"C-{i}")
+
+
+print(gu_xyz)
+print(centers)
+
+plt.xlabel("x-axis [m]")
+plt.ylabel("y-axis [m]")
+plt.title("Simulation Environment")
+plt.xticks(np.arange(X_MIN, X_MAX + 1, X_GRID))
+plt.yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
+plt.xlim(X_MIN, X_MAX)
+plt.ylim(Y_MIN, Y_MAX)
+plt.grid()
+plt.show()
+
+"""
 countA=np.zeros(10)
 clusterNum=0
 RADIUS_FOR_KMEAN=MAX_BEAM_RADIUS-10 #17m(radius) - x(constant)
@@ -129,13 +141,9 @@ for i in range(1,9):
     if np.sum(countA)==10:
         clusterNum=i
         break
-
 print(centers)
-print(clusterNum)
+print(clusterNum)"""
 
-#finding groups end
-
-#code related to charge start
 #distanceAB=(((gu_memory[0][nextloc]-gu_memory[0][currentloc])**2)+((gu_memory[1][nextloc]-gu_memory[1][currentloc])**2))**(1/2) 
 
 """for i in range(clusterNum):
@@ -147,63 +155,3 @@ print(clusterNum)
     else:
         quit()
 """
-
-#first step
-distancesFromNow = np.zeros(clusterNum)
-currentXYloc=np.zeros(2)+50
-for i in range(clusterNum):
-    distancesFromNow[i]=(((centers[i][0] - currentXYloc[0])**2)+((centers[i][1] - currentXYloc[1])**2))**(1/2) 
-
-"""
-print(distancesFromNow)
-print(np.argmin(distancesFromNow))
-nextloc=np.argmax(distancesFromNow)
-#distancesFromNow[nextloc]=100
-#nextloc=np.argmin(distancesFromNow)
-
-currentXYloc=centers[nextloc]
-"""
-print(currentXYloc)
-time1=np.zeros(10)
-time2=np.zeros(clusterNum)
-for i in range(len(distancesFromNow)):
-    print("distances: "+str(distancesFromNow))
-    currentXYloc=centers[i]
-    print("current XY location: "+str(currentXYloc))
-    for k in range(10):
-        if currentXYloc[0]-MAX_BEAM_RADIUS<=gu_memory[0][k]<=currentXYloc[0]+MAX_BEAM_RADIUS and currentXYloc[1]-MAX_BEAM_RADIUS<=gu_memory[1][k]<=currentXYloc[1]+MAX_BEAM_RADIUS:
-            print(k)
-            distance1=(((gu_memory[0][k] - currentXYloc[0])**2)+((gu_memory[1][k] - currentXYloc[1])**2)+100)**(1/2)
-            print("distance: "+str(distance1))
-            while gu_bat[k]<100:
-                gu_bat[k]+=calc_rx_power(distance1)
-                time1[k]+=1
-                #print("gumemory="+str(gu_memory[0][k]+", "+str(gu_memory))
-                print(str(time1)+"second")
-                #print(str(distance1)+"m, rx_power="+str(calc_rx_power(distance1)))
-                print(str(gu_bat[k])+"mWs")
-                n=input('continue?')
-                if n=='a':
-                    #plt.text(x=centers[i][0] + 3.5, y=centers[i][1] + 4, s=f"UAV state-{i}")
-                    continue
-                else:
-                    quit()
-            current_batt[k].remove()
-            current_batt[k] = ax.text(x=gu_memory[0][k] - 6, y=gu_memory[1][k] - 7, s=f"{gu_bat[k]:.2f}mWs")
-        time2[i]=np.max(time1)
-        print("time2 var="+str(time2))
-print(time1)
-#first step end 
-
-
-
-plt.xlabel("x-axis [m]")
-plt.ylabel("y-axis [m]")
-plt.title("Simulation Environment")
-plt.xticks(np.arange(X_MIN, X_MAX + 1, X_GRID))
-plt.yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
-plt.xlim(X_MIN, X_MAX)
-plt.ylim(Y_MIN, Y_MAX)
-plt.grid()
-plt.show()
-
