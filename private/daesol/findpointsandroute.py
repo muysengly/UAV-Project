@@ -49,6 +49,9 @@ def calc_rx_power(d):
     # received power [mWh]
     return 1*10**((TX_POWER - (20*np.log10((4*np.pi*d*F)/C)))/10) * 1000
 
+def distance3d(center,i,j):
+    return (((center[i][0]-center[j][0])**2)+((center[i][1]-center[j][1])**2)+100)**(1/2)
+
 #intial parameter
 NUM_GU = 10  # number of ground users
 TX_POWER = 32  # transmit power [dBm]
@@ -67,6 +70,12 @@ MAX_BEAM_RADIUS = MAX_BEAM_DIAMETER/2
 X_GRID = 10  # number of x grid
 Y_GRID = 10  # number of y grid
 UAV_TX_POWER = 30  # uav's transmit power in [dBm]
+
+MAX_UAV_BATTERY=450 #uav's battery; 500mW
+UAV_SPEED = 6 #[m/s]
+UAV_MOVE= 10 #10mWs when moving
+UAV_HOV= 5 # 5mWs when hovering
+
 #initial variables
 t = 0  # time [seconds]
 gu_bat = np.zeros((NUM_GU,)) # battery of ground user [mWh]
@@ -93,22 +102,73 @@ for i in range(NUM_GU):
     plt.text(x=gu_x[i] - 3.5, y=gu_y[i] - 4, s=f"GU-{i}")
     plt.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]}mWh")
 
-clusterNum=7
-kmeans = KMeans(
-    n_clusters=clusterNum,
-    n_init="auto"
-).fit(gu_xyz)
-centers = kmeans.cluster_centers_
-clear_output(False)
-centers=centers[:,0:2]
+countA=np.zeros(10)
+clusterNum=0
+RADIUS_FOR_KMEAN=MAX_BEAM_RADIUS #17m(radius) - x(constant)
+for i in range(1,10):
+    countA=np.zeros(10)
+    kmeans = KMeans(
+        n_clusters=i,
+        n_init="auto"
+    ).fit(gu_xyz)
+    centers = kmeans.cluster_centers_
+    clear_output(False)
+    for j in range(i):
+        for k in range(10):
+            if centers[j][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[j][0]+RADIUS_FOR_KMEAN and centers[j][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[j][1]+RADIUS_FOR_KMEAN:
+                    print("radius: "+str(RADIUS_FOR_KMEAN))
+                    print("center: "+str(centers[j][0])+", "+str(centers[j][1]))
+                    print("gu("+str(k)+"):"+str(gu_x[k])+", "+str(gu_y[k]))
+                    countA[k]=1
+    print("cluster num= "+str(i))
+    print(centers)
+    print(countA)
+    if np.sum(countA)==10:
+        clusterNum=i
+        break
+print(centers)
+print(clusterNum)
+print("count:"+str(countA))
 
-for i in range(clusterNum):
+centers=np.vstack(([[50, 50]], centers[:, 0:2]))
+centers=[[50, 50],
+         [1.5, 23.5],
+         [35.5, 42.5],
+         [89, 20],
+         [35.6667, 15.33],
+         [25.5, 82.5]]
+
+for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
     plt.text(x=centers[i][0] - 1.5, y=centers[i][1] + 2, s=f"C-{i}")
 
+#distances
+currentloc=0
+previousloc=0
+currentlocXY=np.zeros(2)
+currentlocXY=centers[currentloc]
+battp2p=0
+currentbatt=MAX_UAV_BATTERY
 
-print(gu_xyz)
-print(centers)
+distances=np.zeros(len(centers))
+distances[0]=9999
+for i in range(1,len(centers)):
+    if i == currentloc:
+        distances[i]=9999
+    else:
+        distances[i]=distance3d(centers,currentloc,i)
+currentloc=np.argmin(distances)
+currentlocXY=centers[currentloc]
+battp2p=(np.min(distances)/UAV_SPEED)*UAV_MOVE
+currentbatt-=battp2p
+
+
+print("distances: "+str(distances))
+print("centers: "+str(centers))
+print("currentlocXY: "+str(currentlocXY))
+print("currentloc:"+str(currentloc))
+print("power used in moving: "+str(battp2p))
+print("UAV battery: "+str(currentbatt))
 
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
@@ -155,3 +215,10 @@ print(clusterNum)"""
     else:
         quit()
 """
+"""clusterNum=7
+kmeans = KMeans(
+    n_clusters=clusterNum,
+    n_init="auto"
+).fit(gu_xyz)
+centers = kmeans.cluster_centers_
+clear_output(False)"""
