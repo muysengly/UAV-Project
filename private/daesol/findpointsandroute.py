@@ -75,6 +75,7 @@ MAX_UAV_BATTERY=800 #uav's battery; 500mW
 UAV_SPEED = 6 #[m/s]
 UAV_MOVE= 10 #10mWs when moving
 UAV_HOV= 5 # 5mWs when hovering
+UAV_LOWBATT = 250 # go to charge station when UAV's battery left is 200mW
 
 #initial variables
 t = 0  # time [seconds]
@@ -155,39 +156,47 @@ currentbatt=MAX_UAV_BATTERY
 gucounter=0
 distances=np.zeros(len(centers))
 route.append(0)
-for a in range(3):
+for a in range(7):
     distances[0]=9999
     batt4p2p=0
     batt4hov=0
     batt4txpw=0
     gucounter=0
 
-    #move to next point
-    for i in range(1,len(centers)):
-        if i == currentloc:
-            distances[i]=9999
-        elif np.any(np.in1d(route,i))==1:
-            distances[i]=9999
-        else:
-            distances[i]=distance3d(centers,currentloc,i)
-    currentloc=np.argmin(distances)
-    currentlocXY=centers[currentloc]
-    route.append(currentloc)
-    batt4p2p=(np.min(distances)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
+    if currentbatt>UAV_LOWBATT: # if current battery is higher than
+        #move to next point
+        for i in range(1,len(centers)):
+            if i == currentloc:
+                distances[i]=9999
+            elif np.any(np.in1d(route,i))==1:
+                distances[i]=9999
+            else:
+                distances[i]=distance3d(centers,currentloc,i)
+        currentloc=np.argmin(distances)
+        currentlocXY=centers[currentloc]
+        route.append(currentloc)
+        batt4p2p=(np.min(distances)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
 
-    currentbatt-=batt4p2p
-    #check how many GU's are there inside beam circle
-    for k in range(10):
-        if centers[currentloc][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[currentloc][0]+RADIUS_FOR_KMEAN and centers[currentloc][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[currentloc][1]+RADIUS_FOR_KMEAN and gu_bat[k]!=100:
-            gucounter+=1
-            gu_bat[k]=100
-            current_batt[k].remove()
-            current_batt[k] = ax.text(
-                x=gu_x[k] - 6, y=gu_y[k] - 7, s=f"{gu_bat[k]:.2f}mWs")
-        
-    batt4hov=1*UAV_HOV # x second * power used for hovering 
-    batt4txpw=gucounter*100 # number of GU's inside Beam * power used for trasmitting power
-    currentbatt-=(batt4hov+batt4txpw) 
+        currentbatt-=batt4p2p
+        #check how many GU's are there inside beam circle
+        for k in range(10):
+            if centers[currentloc][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[currentloc][0]+RADIUS_FOR_KMEAN and centers[currentloc][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[currentloc][1]+RADIUS_FOR_KMEAN and gu_bat[k]!=100:
+                gucounter+=1
+                gu_bat[k]=100
+                current_batt[k].remove()
+                current_batt[k] = ax.text(
+                    x=gu_x[k] - 6, y=gu_y[k] - 7, s=f"{gu_bat[k]:.2f}mWs")
+            
+        batt4hov=1*UAV_HOV # x second * power used for hovering 
+        batt4txpw=gucounter*100 # number of GU's inside Beam * power used for trasmitting power
+        currentbatt-=(batt4hov+batt4txpw) 
+        #end of move to next point
+    else: #go to charge station
+        batt4p2p=(distance3d(centers,currentloc,0)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
+        currentloc=0
+        currentlocXY=centers[currentloc]
+        route.append(currentloc)
+        currentbatt=MAX_UAV_BATTERY
 
     print("distances: "+str(distances))
     print("centers: "+str(centers))
