@@ -186,7 +186,7 @@ for a in range(7):
                 current_batt[k].remove()
                 current_batt[k] = ax.text(
                     x=gu_x[k] - 6, y=gu_y[k] - 7, s=f"{gu_bat[k]:.2f}mWs")
-            
+        
         batt4hov=1*UAV_HOV # x second * power used for hovering 
         batt4txpw=gucounter*100 # number of GU's inside Beam * power used for trasmitting power
         currentbatt-=(batt4hov+batt4txpw) 
