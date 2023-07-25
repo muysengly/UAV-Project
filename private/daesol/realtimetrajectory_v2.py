@@ -45,6 +45,8 @@ def calc_rx_power(d):
 
 def distance3d(center,i,j):
     return (((center[i][0]-center[j][0])**2)+((center[i][1]-center[j][1])**2)+100)**(1/2)
+def distance2(center,gux,guy,i,j):
+    return (((center[i][0]-gux[j][0])**2)+((center[i][1]-guy[j][1])**2)+100)**(1/2)
 
 #intial parameter
 NUM_GU = 10  # number of ground users
@@ -69,7 +71,7 @@ UAV_TX_POWER = 30  # uav's transmit power in [dBm]
 MAX_UAV_BATTERY=800 #uav's battery; 500mW
 UAV_SPEED = 6 #[m/s]
 UAV_MOVE= 10 #10mWs when moving
-UAV_HOV= 5 # 5mWs when hovering
+UAV_HOV= 2 # 5mWs when hovering
 UAV_LOWBATT = 250 # go to charge station when UAV's battery left is 200mW
 
 #initial variables
@@ -173,16 +175,22 @@ for a in range(9):
         batt4p2p=(np.min(distances)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
 
         currentbatt-=batt4p2p
+        time1=[]
+        tttt=1
         #check how many GU's are there inside beam circle
         for k in range(10):
             if centers[currentloc][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[currentloc][0]+RADIUS_FOR_KMEAN and centers[currentloc][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[currentloc][1]+RADIUS_FOR_KMEAN and gu_bat[k]!=100:
                 gucounter+=1
                 gu_bat[k]=100
+                dd=(((centers[currentloc][0]-gu_x[k])**2)+((centers[currentloc][1]-gu_y[k])**2)+100)**(1/2)
+                time1=np.append(time1,(100/calc_rx_power(dd)))
+                print("times: "+str(time1))
                 current_batt[k].remove()
                 current_batt[k] = ax.text(
                     x=gu_x[k] - 6, y=gu_y[k] - 7, s=f"{gu_bat[k]:.2f}mWs")
-        
-        batt4hov=1*UAV_HOV # x second * power used for hovering 
+        if len(time1)>0:
+           tttt=int(np.max(time1))
+        batt4hov=tttt*UAV_HOV # x second * power used for hovering 
         batt4txpw=gucounter*100 # number of GU's inside Beam * power used for trasmitting power
         currentbatt-=(batt4hov+batt4txpw) 
         #end of move to next point
@@ -249,11 +257,13 @@ ax.set_xlim(X_MIN, X_MAX)
 ax.set_ylim(Y_MIN, Y_MAX)
 ax.grid()
 uavbat1=800
+t2=0
+ttt=0
 # plot real time update trajectory
 for t in range(len(uav_time)-1):
-
+    ttt=t+t2
     # update title
-    ax.set_title(f"Simulation Result [ t = {t}s ]")
+    ax.set_title(f"Simulation Result [ t = {ttt}s ]")
 
     # calculate distance
     distance_uav2gu = distance_matrix(
@@ -266,13 +276,21 @@ for t in range(len(uav_time)-1):
     for a in range(1,6):
         gucount=0
         charge=0
+        times=[]
         if centers[a][0]==uav_time[t+1][0] and centers[a][1]==uav_time[t+1][1]:
             for k in range(10):
                 if centers[a][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[a][0]+RADIUS_FOR_KMEAN and centers[a][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[a][1]+RADIUS_FOR_KMEAN and gu_bat[k]!=100:
                     gu_bat[k]=100
                     gucount+=1
+                    d1=(((centers[a][0]-gu_x[k])**2)+((centers[a][1]-gu_y[k])**2)+100)**(1/2)
+                    times=np.append(times,(100/calc_rx_power(d1)))
+                    #print("centers:"+str(centers[a])+", gus:"+str(gu_x[k])+","+str(gu_y[k]))
+                    #print(times)
+            t2+=int(np.max(times))
             
-            uavbat1-=(gucount*100)
+            ax.text(x=uav_time[t+1][0] - 6, y=uav_time[t+1][1] - 8, s=f"{int(np.max(times)):.2f}sec")
+            
+            uavbat1-=(gucount*100)+(np.max(times))
             #gu_bat += (rx_power*(distance_uav2gu <= MAX_BEAM_DISTANCE+1))[0]
     if uav_time[t+1][0]==50 and uav_time[t+1][1]==50:
         uavbat1=800
@@ -297,14 +315,14 @@ for t in range(len(uav_time)-1):
         marker="s",
         zorder=1
     )
-    
     uavbat1-=UAV_MOVE
+
     
     if t>0:
         uav_batt.remove()
     uav_batt = ax.text(
         x=uav_time[t+1][0] - 6, y=uav_time[t+1][1] - 7, s=f"{uavbat1:.2f}mWs")
-    
+
     # remove the previous beam cirle and plot the new one
     if t > 0:
          beam_circle.remove()
