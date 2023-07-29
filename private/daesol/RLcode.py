@@ -7,6 +7,7 @@ import pandas as pd
 from scipy.spatial import distance_matrix
 from sklearn.cluster import KMeans
 from IPython.display import display, clear_output
+import random
 
 def has_duplicates(seq):
     return len(seq) != len(set(seq))
@@ -47,6 +48,13 @@ def calc_rx_power(d):
 
 def distance3d(center,i,j):
     return (((center[i][0]-center[j][0])**2)+((center[i][1]-center[j][1])**2)+100)**(1/2)
+
+def qvalue(sec,length,count,salerate):
+    return (sec/length)*(salerate**count)
+
+def usedtime(distance,speed,chargetime):
+    return (distance*speed)+chargetime.sum()
+
 
 #intial parameter
 NUM_GU = 10  # number of ground users
@@ -102,6 +110,7 @@ for i in range(NUM_GU):
     current_batt.append(
         ax.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]}mWh"))
 
+#k-mean, finding cluster centers
 countA=np.zeros(10)
 clusterNum=0
 RADIUS_FOR_KMEAN=MAX_BEAM_RADIUS #17m(radius) - x(constant)
@@ -144,17 +153,56 @@ for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
     plt.text(x=centers[i][0] - 1.5, y=centers[i][1] + 2, s=f"C-{i}")
 
-#distances
-episode=500
-state_list=list(range(len(centers)))
-print(state_list)
+
+#RL
+episode=3
+#about route
+route=[]
+initial_state=list(range(len(centers)))
+possible_state=initial_state
+current_state=0
+
+#about Q table - define func: 
+# qvalue(sec,length,count,salerate), 
+# sec= usedtime(distance,speed,chargetime)
+EPSILON = 0.7
+length_centers = len(centers)-1
+NUM_POSSIBLE_STATE=length_centers**2
+
+qtable=np.zeros((NUM_POSSIBLE_STATE,3)) #
+column_names = ["Current", "Next", "Q value"]
+qtable_df=pd.DataFrame(qtable,columns=column_names)
+
+episode_done=np.zeros((episode,len(centers)))
+episode_done_df=pd.DataFrame(episode_done)
+
+#get random route
+for randomroute in range(episode):
+    route=[]
+    initial_state=list(range(len(centers)))
+    possible_state=initial_state
+    current_state=0
+    for i in range(len(centers)):
+        route.append(current_state)
+        possible_state.remove(current_state)
+        if len(possible_state)>0:
+            next_state=random.choice(possible_state)
+        print(f"possible state:{possible_state}")
+        print(f"route={route}")
+        print(f"current state:{current_state}")
+        print(f"next state: {next_state}")
+        print("------------------------------------")
+        current_state=next_state
+
+    print(f"final random route:{route}")
+    episode_done[randomroute]=route
+
+print(episode_done)
+
+print(qtable)
+print(pd.DataFrame(qtable_df))
 
 
-
-"""
-print(list(filter(lambda n: n!=1,tmpnum)))
-print(list(filter(lambda n: n!=2,tmpnum))[3])
-"""
 
 
 """
