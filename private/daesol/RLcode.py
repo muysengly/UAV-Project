@@ -49,12 +49,26 @@ def calc_rx_power(d):
 def distance3d(center,i,j):
     return (((center[i][0]-center[j][0])**2)+((center[i][1]-center[j][1])**2)+100)**(1/2)
 
-def qvalue(sec,length,count,salerate):
-    return (sec/length)*(salerate**count)
+def qreward(sec,length,timestep,salerate):
+    return (sec/length)*(salerate**timestep)
+
+def qfunc(currentq,nextq,alpha,gamma):
+    min_nextq=np.min(nextq)
+    return currentq+(alpha((gamma*min_nextq)-(currentq)))
 
 def usedtime(distance,speed,chargetime):
-    return (distance*speed)+chargetime.sum()
+    return (distance/speed)+chargetime.sum()
 
+def calc_move_distances(route,center,length):
+    total_distance=0
+    for i in range(length):
+        distancei=(((center[int(route[i])][0]-center[int(route[i+1])][0])**2)+((center[int(route[i])][1]-center[int(route[i+1])][1])**2)+100)**(1/2)
+        total_distance+=distancei
+        print(distancei)
+    return total_distance
+
+def total_used_time(totalmove,speed,chargetime):
+    return (totalmove*speed)+chargetime
 
 #intial parameter
 NUM_GU = 10  # number of ground users
@@ -75,11 +89,11 @@ X_GRID = 10  # number of x grid
 Y_GRID = 10  # number of y grid
 UAV_TX_POWER = 30  # uav's transmit power in [dBm]
 
-MAX_UAV_BATTERY=800 #uav's battery; 500mW
+MAX_UAV_BATTERY=1200 #uav's battery; 500mW
 UAV_SPEED = 6 #[m/s]
 UAV_MOVE= 10 #10mWs when moving
-UAV_HOV= 5 # 5mWs when hovering
-UAV_LOWBATT = 250 # go to charge station when UAV's battery left is 200mW
+UAV_HOV= 2 # 2mWs when hovering
+UAV_LOWBATT = 350 # go to charge station when UAV's battery left is 200mW
 
 #initial variables
 t = 0  # time [seconds]
@@ -141,13 +155,13 @@ print("count:"+str(countA))
 print("----------------------------------")
 
 centers=np.vstack(([[50, 50]], centers[:, 0:2]))
-centers=[[50, 50],
+"""centers=[[50, 50],
         [83, 93],
         [6.5, 30],
         [94, 38],
         [23, 57.5],
         [43, 59.5],
-        [82, 3]]
+        [82, 3]]"""
 
 for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
@@ -163,43 +177,131 @@ possible_state=initial_state
 current_state=0
 
 #about Q table - define func: 
-# qvalue(sec,length,count,salerate), 
+# qvalue(sec,length,timestep,salerate), 
 # sec= usedtime(distance,speed,chargetime)
-EPSILON = 0.7
+EPSILON = 0.99 #epsilon decay
+epsilon_decay=EPSILON
+DISCOUNT_RATE=0.9
+LEARNING_RATE=0.1
 length_centers = len(centers)-1
-NUM_POSSIBLE_STATE=length_centers**2
+NUM_POSSIBLE_STATE=(length_centers**2)+length_centers
 
-qtable=np.zeros((NUM_POSSIBLE_STATE,3)) #
-column_names = ["Current", "Next", "Q value"]
+
+qtable=np.zeros((NUM_POSSIBLE_STATE,4))
+#Q table col-current, col-next 
+route4input=list(range(len(centers)))
+for inputcurrent in range(len(centers)):
+    tmpnext=list(filter(lambda n: n!=inputcurrent,route4input))
+    for i in range(len(centers)-1):
+        x=(length_centers*inputcurrent)+i
+        qtable[x][0]=inputcurrent
+        qtable[x][1]=tmpnext[i]
+column_names = ["Current", "Next", "Q value", "Data #'s"]
 qtable_df=pd.DataFrame(qtable,columns=column_names)
 
-episode_done=np.zeros((episode,len(centers)))
-episode_done_df=pd.DataFrame(episode_done)
+#episode_done=np.zeros((episode,len(centers)))
+#episode_done_df=pd.DataFrame(episode_done)
+episode_done=[] #2dimension
 
-#get random route
-for randomroute in range(episode):
+#get random route, max charge time
+route=[]
+currentbatt=MAX_UAV_BATTERY
+gucounter=0
+route.append(0)
+possible_state.remove(0)
+"""for a in range(9):"""
+batt4p2p=0
+batt4hov=0
+batt4txpw=0
+gucounter=0
+chargingtime=0
+gubigcounter=0
+karray1=[]
+#randomly pick next state using epsilon
+for countepisode in range(episode):
     route=[]
-    initial_state=list(range(len(centers)))
-    possible_state=initial_state
-    current_state=0
-    for i in range(len(centers)):
-        route.append(current_state)
-        possible_state.remove(current_state)
-        if len(possible_state)>0:
-            next_state=random.choice(possible_state)
-        print(f"possible state:{possible_state}")
-        print(f"route={route}")
-        print(f"current state:{current_state}")
-        print(f"next state: {next_state}")
-        print("------------------------------------")
-        current_state=next_state
+    currentbatt=MAX_UAV_BATTERY
+    gubigcounter=0
+    possible_state=list(range(len(centers)))
+    route.append(0)
+    possible_state.remove(0)
+    karray1=[]
 
-    print(f"final random route:{route}")
-    episode_done[randomroute]=route
+    while gubigcounter!=NUM_GU:
+        batt4p2p=0
+        batt4hov=0
+        batt4txpw=0
+        gucounter=0
+        if currentbatt>UAV_LOWBATT: # if current battery is higher than
+            if random.random()<epsilon_decay: #any states
+                next_state=random.choice(possible_state)
+                route.append(next_state)
+                print("a")
+            else: #state with highest Q value
+                tmparray=[]
+                for findhighest in range(length_centers):
+                    x=(current_state*length_centers)+findhighest
+                    tmparray.append(qtable[x][2])
+                next_state = int(qtable[(current_state*length_centers)+np.argmax(tmparray)][1])    
+                if np.in1d(possible_state,next_state).any()==0:
+                    next_state=random.choice(possible_state)
+                route.append(next_state)
+                print(f"b, next={current_state}, tmparray={np.argmax(tmparray)}")
+            batt4p2p=(distance3d(centers,current_state,next_state)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
+            print(f"current={current_state}, next={next_state}")
+            current_state=next_state
+            print(possible_state)
+            if np.in1d(possible_state,current_state).any()==1:
+                possible_state.remove(current_state)
+            print(f"tmp route:{route}")
+            print(f"batt4p2p={batt4p2p}")
+    #memo
+            currentbatt-=batt4p2p
+            time1=[]
+            tttt=1
+            karray=[]
+            #check how many GU's are there inside beam circle
+            for k in range(10):
+                if centers[current_state][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[current_state][0]+RADIUS_FOR_KMEAN and centers[current_state][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[current_state][1]+RADIUS_FOR_KMEAN and gu_bat[k]!=100:
+                    if np.in1d(karray1,k).any()==True:
+                        print(f"{k}is repeated")
+                    else:
+                        karray1.append(k)
+                        karray.append(k)
+                        gucounter+=1
+                        gubigcounter+=1
+                        dd=(((centers[current_state][0]-gu_x[k])**2)+((centers[current_state][1]-gu_y[k])**2)+100)**(1/2)
+                        time1=np.append(time1,(100/calc_rx_power(dd)))
+                    
+            if len(time1)>0: #largest time
+                tttt=int(np.max(time1))
+                chargingtime+=tttt
+                batt4hov=tttt*UAV_HOV # x second * power used for hovering 
+                batt4txpw=gucounter*100 # number of GU's inside Beam * power used for trasmitting power
+                print(f"batt4hov={batt4hov}, batt4txpw={batt4txpw}, time={tttt}, k={karray}")
+                currentbatt-=(batt4hov+batt4txpw) 
+                #ok until here
+        else: #go to charge station
+            batt4p2p=(distance3d(centers,current_state,0)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
+            current_state=0
+            currentlocXY=centers[current_state]
+            route.append(current_state)
+            currentbatt=MAX_UAV_BATTERY
+    #memo end
+        print(f"currentbatt={int(currentbatt)}, routes={route}, gu={gucounter}")
+        """n=input('continue?')
+        if n=='a':
+            continue
+        else:
+            quit()"""
+    #find qvalue
+    print(f"total time={chargingtime}")
+    print("--------------------------------")
+    episode_done.append(route)
 
-print(episode_done)
-
-print(qtable)
+print(f"episode_done:{episode_done}")
+print(calc_move_distances(episode_done[0],centers,length_centers))
+print(f"Q table:{qtable}")
 print(pd.DataFrame(qtable_df))
 
 
@@ -254,9 +356,7 @@ print(clusterNum)"""
 """for i in range(clusterNum):
     n=input('continue?')
     if n=='a':
-        print(i)
-        makeBeamCirclewDot(centers[i][0],centers[i][1],MAX_BEAM_DIAMETER,'orange')
-        plt.text(x=centers[i][0] + 3.5, y=centers[i][1] + 4, s=f"UAV state-{i}")
+        continue
     else:
         quit()
 """
@@ -267,3 +367,28 @@ kmeans = KMeans(
 ).fit(gu_xyz)
 centers = kmeans.cluster_centers_
 clear_output(False)"""
+
+"""for randomroute in range(episode):
+    route=[]
+    initial_state=list(range(len(centers)))
+    possible_state=initial_state
+    current_state=0
+    for i in range(len(centers)):
+        route.append(current_state)
+        possible_state.remove(current_state)
+        if len(possible_state)>0:
+            next_state=random.choice(possible_state)
+        print(f"possible state:{possible_state}")
+        print(f"route={route}")
+        print(f"current state:{current_state}")
+        print(f"next state: {next_state}")
+        print("------------------------------------")
+        current_state=next_state
+
+    print(f"final random route:{route}")
+    if randomroute==0:
+        episode_done[randomroute]=route
+    else:
+        for checkrepeat in range(randomroute):
+            if np.array_equal(episode_done[checkrepeat],route)==0:
+                episode_done[randomroute]=route"""
