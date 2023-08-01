@@ -52,12 +52,19 @@ def distance3d(center,i,j):
 def qreward(sec,length,timestep,salerate):
     return (sec/length)*(salerate**timestep)
 
-def qfunc(currentq,nextq,alpha,gamma):
-    min_nextq=np.min(nextq)
-    return currentq+(alpha((gamma*min_nextq)-(currentq)))
+def qfunc(currents,nexts,length,qtable,alpha,gamma):
+    if nexts>currents:
+        currentq=qtable[currents][nexts-1][1]
+    else:
+        currentq=qtable[currents][nexts][1]
+    nextq_array=[]
+    for i in range(length):
+        nextq_array.append(qtable[currents][i][1])
+    min_nextq=np.min(nextq_array)
+    return currentq+(alpha*((gamma*min_nextq)-(currentq)))
 
-def usedtime(distance,speed,chargetime):
-    return (distance/speed)+chargetime.sum()
+def total_used_time(totaldistance,speed,chargetime):
+    return (totaldistance/speed)+chargetime
 
 def calc_move_distances(route,center,length):
     total_distance=0
@@ -67,8 +74,6 @@ def calc_move_distances(route,center,length):
         print(distancei)
     return total_distance
 
-def total_used_time(totalmove,speed,chargetime):
-    return (totalmove*speed)+chargetime
 
 #intial parameter
 NUM_GU = 10  # number of ground users
@@ -169,7 +174,7 @@ for i in range(len(centers)):
 
 
 #RL
-episode=3
+episode=1000
 #about route
 route=[]
 initial_state=list(range(len(centers)))
@@ -187,17 +192,18 @@ length_centers = len(centers)-1
 NUM_POSSIBLE_STATE=(length_centers**2)+length_centers
 
 
-qtable=np.zeros((NUM_POSSIBLE_STATE,4))
+qtable=np.zeros((len(centers),length_centers,3))
 #Q table col-current, col-next 
 route4input=list(range(len(centers)))
 for inputcurrent in range(len(centers)):
     tmpnext=list(filter(lambda n: n!=inputcurrent,route4input))
     for i in range(len(centers)-1):
-        x=(length_centers*inputcurrent)+i
-        qtable[x][0]=inputcurrent
-        qtable[x][1]=tmpnext[i]
+        qtable[inputcurrent][i][0]=tmpnext[i]
 column_names = ["Current", "Next", "Q value", "Data #'s"]
-qtable_df=pd.DataFrame(qtable,columns=column_names)
+m,n,r = qtable.shape
+out_arr = np.column_stack((np.repeat(np.arange(m),n),qtable.reshape(m*n,-1)))
+out_df = pd.DataFrame(out_arr,columns=column_names)
+#qtable_df=pd.DataFrame(qtable,columns=column_names)
 
 #episode_done=np.zeros((episode,len(centers)))
 #episode_done_df=pd.DataFrame(episode_done)
@@ -225,6 +231,7 @@ for countepisode in range(episode):
     possible_state=list(range(len(centers)))
     route.append(0)
     possible_state.remove(0)
+    chargingtime=0
     karray1=[]
 
     while gubigcounter!=NUM_GU:
@@ -232,6 +239,7 @@ for countepisode in range(episode):
         batt4hov=0
         batt4txpw=0
         gucounter=0
+        current_state=0
         if currentbatt>UAV_LOWBATT: # if current battery is higher than
             if random.random()<epsilon_decay: #any states
                 next_state=random.choice(possible_state)
@@ -241,14 +249,21 @@ for countepisode in range(episode):
                 tmparray=[]
                 for findhighest in range(length_centers):
                     x=(current_state*length_centers)+findhighest
-                    tmparray.append(qtable[x][2])
-                next_state = int(qtable[(current_state*length_centers)+np.argmax(tmparray)][1])    
+                    tmparray.append(qtable[current_state][findhighest][2])
+                next_state = int(qtable[current_state][np.argmin(tmparray)][0])    
                 if np.in1d(possible_state,next_state).any()==0:
                     next_state=random.choice(possible_state)
                 route.append(next_state)
-                print(f"b, next={current_state}, tmparray={np.argmax(tmparray)}")
+                print(f"b, next={current_state}, tmparray={np.argmin(tmparray)}")
             batt4p2p=(distance3d(centers,current_state,next_state)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
             print(f"current={current_state}, next={next_state}")
+
+            #find qvalue->qfunc() before changing state
+            if next_state>current_state:
+                qtable[current_state][next_state-1][1]=qfunc(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE)
+            else:
+                qtable[current_state][next_state][1]=qfunc(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE)
+
             current_state=next_state
             print(possible_state)
             if np.in1d(possible_state,current_state).any()==1:
@@ -294,15 +309,31 @@ for countepisode in range(episode):
             continue
         else:
             quit()"""
-    #find qvalue
-    print(f"total time={chargingtime}")
+    #find qvalue ->qreward
+    total_d=calc_move_distances(route,centers,len(route)-1)
+    total_t=total_used_time(total_d,UAV_SPEED,chargingtime)
+    for insertq in range(len(route)-1):
+        cs=route[insertq]
+        ns=route[insertq+1]
+        if ns>cs:
+            qtable[cs][ns-1][1]=qreward(total_t,length_centers,insertq,DISCOUNT_RATE)
+        else:
+            qtable[cs][ns][1]=qreward(total_t,length_centers,insertq,DISCOUNT_RATE)
+    #for findreward in range(length_centers):
+
+    print(f"total time={total_t}")
     print("--------------------------------")
     episode_done.append(route)
+
+
+m,n,r = qtable.shape
+out_arr = np.column_stack((np.repeat(np.arange(m),n),qtable.reshape(m*n,-1)))
+out_df = pd.DataFrame(out_arr,columns=column_names)
 
 print(f"episode_done:{episode_done}")
 print(calc_move_distances(episode_done[0],centers,length_centers))
 print(f"Q table:{qtable}")
-print(pd.DataFrame(qtable_df))
+print(pd.DataFrame(out_df))
 
 
 
