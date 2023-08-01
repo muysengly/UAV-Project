@@ -18,14 +18,8 @@ def makeUAV(xpos,ypos,maxbeam,uavno):
     plt.text(x=uav_x - 3.5, y=uav_y - 4, s=uav_number)
 
 def makeBeamCircle(xpos,ypos,maxbeam,color):
-    uav_x_pos = xpos  # x position of uav 0,1,...,GRID_SIZE-1
-    uav_y_pos = ypos  # y position of uav 0,1,...,GRID_SIZE-1
-    uav_x = GRID[1, uav_x_pos, uav_y_pos]
-    uav_y = GRID[0, uav_x_pos, uav_y_pos]
-    uav_z2 = UAV_ALTITUDE  # uav's altitude [meter]
-
     beam_circle = Ellipse(
-        xy=(uav_x, uav_y),
+        xy=(xpos, ypos),
         width=maxbeam,
         height=maxbeam,
         angle=0,
@@ -36,12 +30,11 @@ def makeBeamCircle(xpos,ypos,maxbeam,color):
     uav_beam = ax.add_patch(beam_circle)
 
 def searchGu(x,y):
-    uavx=(x+0.5)*10
-    uavy=(y+0.5)*10
+
     tmp_count=0
     count=0
     for k in range(10):
-        if uavx-17<=gu_x[k]<=uavx+17 and uavy-17<=gu_y[k]<=uavy+17:
+        if x-17<=gu_x[k]<=x+17 and y-17<=gu_y[k]<=y+17:
             if gu_memory[0][k]!=gu_x[k] and gu_memory[1][k]!=gu_y[k]:
                 print("gu #: ",end='')
                 counter1[0]+=1
@@ -122,6 +115,42 @@ tmp_state=np.ones((10,2))
 countUAV=1
 counter1=np.zeros(1)
 guno=np.zeros(1)
+
+uav_routes=np.zeros((25,2))
+x=15
+y=5
+count1=0
+for i in range(5):
+    for j in range(5):
+        uav_routes[count1][0]=x
+        count1+=1
+    x+=20
+count1=0
+for i in range(5):
+    y=5
+    for j in range(5):
+        uav_routes[count1][1]=y
+        y+=20
+        count1+=1
+print(uav_routes)
+
+route1=[0,1,2,3,4,9,14,19,24,23,22,21,20,15,10,5,6,7,8,13,18,17,16,11,12]
+uavnum=1
+count2=1
+for i in range(25):
+    plt.scatter(x=uav_routes[route1[i]][0], y=uav_routes[route1[i]][1], c='red')
+    ax.text(x=uav_routes[route1[i]][0] - 3.5, y=uav_routes[route1[i]][1] - 4, s=f"UAV-{i}")
+    if count2%2==0:
+        makeBeamCircle(uav_routes[route1[i]][0],uav_routes[route1[i]][1],MAX_BEAM_DIAMETER,'yellow')
+    else:
+        makeBeamCircle(uav_routes[route1[i]][0],uav_routes[route1[i]][1],MAX_BEAM_DIAMETER,'blue')
+    searchGu(uav_routes[route1[i]][0],uav_routes[route1[i]][1])
+    if counter1[0]==10:
+        break
+   
+
+
+"""
 for i in range(1,11,2):
     if i==1 or i==5 or i==9:
         for k in range(0,10,2):
@@ -165,7 +194,7 @@ for i in range(1,11,2):
                 countUAV+=1
             else:
                 break
-
+"""
             
 print(gu_memory)
 print(counter1)
