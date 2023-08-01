@@ -107,18 +107,26 @@ countA=np.zeros(10)
 clusterNum=0
 RADIUS_FOR_KMEAN=MAX_BEAM_RADIUS #17m(radius) - x(constant)
 
-centers=[[50,50],
- [3,17],
- [35.33333333,61.33333333],
- [82,3],
- [94,38],
- [83,93],
- [18,46.5]]
+#read centers
+print(pd.read_csv('centers.csv'))
+df=pd.read_csv('centers.csv')
+df = df.drop(df.columns[0], axis=1)
+centers=df.to_numpy()
+print(centers)
+
+#read routes
+print(pd.read_csv('routes.csv'))
+df=pd.read_csv('routes.csv')
+df = df.drop(df.columns[0], axis=1)
+route=df.to_numpy()
+route=np.squeeze(route.T)
+print(route)
+route=[0, 6, 1, 0, 2, 4, 5,0]
 points=np.vstack((centers))
 for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
     plt.text(x=centers[i][0] - 1.5, y=centers[i][1] + 2, s=f"C-{i}")
-route=[0, 2, 5, 0, 6, 1, 4, 3]
+
 #uav fly
 
 
