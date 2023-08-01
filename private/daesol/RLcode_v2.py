@@ -8,6 +8,7 @@ from scipy.spatial import distance_matrix
 from sklearn.cluster import KMeans
 from IPython.display import display, clear_output
 import random
+import time
 
 def has_duplicates(seq):
     return len(seq) != len(set(seq))
@@ -62,6 +63,20 @@ def qfunc(currents,nexts,length,qtable,alpha,gamma):
         nextq_array.append(qtable[currents][i][1])
     min_nextq=np.min(nextq_array)
     return currentq+(alpha*((gamma*min_nextq)-(currentq)))
+
+def qfunc2(currents,nexts,length,qtable,alpha,gamma,center,timestep):
+    distancei=(((center[int(currents)][0]-center[int(nexts)][0])**2)+((center[int(currents)][1]-center[int(nexts)][1])**2)+100)**(1/2)
+    reward=distancei*(gamma**timestep)
+    if nexts>currents:
+        currentq=qtable[currents][nexts-1][1]
+    else:
+        currentq=qtable[currents][nexts][1]
+    nextq_array=[]
+    for i in range(length):
+        nextq_array.append(qtable[currents][i][1])
+    min_nextq=np.max(nextq_array)
+    return currentq+(alpha*(reward+(gamma*min_nextq)-(currentq)))
+
 
 def total_used_time(totaldistance,speed,chargetime):
     return (totaldistance/speed)+chargetime
@@ -174,7 +189,7 @@ for i in range(len(centers)):
 
 
 #RL
-episode=3000
+episode=2000
 #about route
 route=[]
 initial_state=list(range(len(centers)))
@@ -234,6 +249,7 @@ for countepisode in range(episode):
     possible_state.remove(0)
     chargingtime=0
     karray1=[]
+    timestep=1
 
     while gubigcounter!=NUM_GU:
         batt4p2p=0
@@ -261,10 +277,11 @@ for countepisode in range(episode):
 
             #find qvalue->qfunc() before changing state
             if next_state>current_state:
-                qtable[current_state][next_state-1][1]=qfunc(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE)
+                qtable[current_state][next_state-1][1]=(qtable[current_state][next_state-1][1]+qfunc2(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE,centers,timestep))/2
+                timestep+=1  
             else:
-                qtable[current_state][next_state][1]=qfunc(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE)
-
+                qtable[current_state][next_state][1]=(qtable[current_state][next_state][1]+qfunc2(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE,centers,timestep))/2
+                timestep+=1  
             current_state=next_state
             print(possible_state)
             if np.in1d(possible_state,current_state).any()==1:
@@ -305,30 +322,28 @@ for countepisode in range(episode):
             currentbatt=MAX_UAV_BATTERY
     #memo end
         print(f"currentbatt={int(currentbatt)}, routes={route}, gu={gucounter}")
-        """n=input('continue?')
-        if n=='a':
-            continue
-        else:
-            quit()"""
+  
     #find qvalue ->qreward
     total_d=calc_move_distances(route,centers,len(route)-1)
     total_t=total_used_time(total_d,UAV_SPEED,chargingtime)
-    for insertq in range(len(route)-1):
+    """for insertq in range(len(route)-1):
         cs=route[insertq]
         ns=route[insertq+1]
         if ns>cs:
             qtable[cs][ns-1][2]+=1
-            qtable[cs][ns-1][1]=((qtable[cs][ns-1][1])+qreward(total_t,length_centers,insertq,DISCOUNT_RATE))/2
+            qtable[cs][ns-1][1]=((qtable[cs][ns-1][1])+qreward(total_t,length_centers,insertq,DISCOUNT_RATE))
         else:
             qtable[cs][ns][2]+=1
-            qtable[cs][ns][1]=((qtable[cs][ns][1])+qreward(total_t,length_centers,insertq,DISCOUNT_RATE))/2
-    #for findreward in range(length_centers):
-
+            qtable[cs][ns][1]=((qtable[cs][ns][1])+qreward(total_t,length_centers,insertq,DISCOUNT_RATE))
+"""
     print(f"total time={total_t}")
     print("--------------------------------")
     episode_done.append(route)
     epsilon_decay-=epsilon_decrease
-
+#------------------------------------------------
+#-----------------------------------------------
+#---------------------------------------------
+#--------------------------------------------
 #for final route
 
 
@@ -341,3 +356,167 @@ print("Q table:")
 print(pd.DataFrame(out_df))
 print(f"last route: {episode_done[episode-1]}")
 print(f"centers: {centers}")
+new_row = pd.DataFrame([['episode:'+str(episode), '-', '-','-']], columns = out_df.columns)
+new_df = pd.concat([out_df.iloc[:0], new_row, out_df.iloc[0:]], ignore_index = True)
+new_df.to_csv('qtable.csv')
+
+
+columns = ['x_coordinate', 'y_coordinate']
+df = pd.DataFrame(centers, columns=columns)
+df.to_csv('centers.csv')
+
+columns = ['route']
+df = pd.DataFrame(episode_done[episode-1], columns=columns)
+df.to_csv('routes.csv')
+
+
+route = episode_done[episode-1]
+
+points=np.vstack((centers))
+for i in range(len(centers)):
+    plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
+    plt.text(x=centers[i][0] - 1.5, y=centers[i][1] + 2, s=f"C-{i}")
+
+#uav fly
+
+
+# calculate flying direction vectors
+direction = {}
+norm_direction = {}
+for i in range(len(route) - 1):
+    direction[i] = points[route[i+1], :] - points[route[i], :]
+    norm_direction[i] = direction[i]/np.linalg.norm(direction[i])
+
+# initial variables
+t = 0  # time [second]
+index = 0  # index of the route
+
+# initial uav location at time t = 0s
+uav_time = {}
+uav_time[t] = np.squeeze(points[[route[0],], :])
+for i in range(NUM_GU):
+    gu_bat[i]=0
+while True:
+
+    t = t + 1  # increase time t
+
+    # update the next location of uav
+    uav_time[t] = np.squeeze(uav_time[t-1] + UAV_SPEED*norm_direction[index])
+
+    # calculate the next location vs. the end point
+    tmp = (uav_time[t] - points[route[index+1], :]) / \
+        np.linalg.norm(uav_time[t] - points[route[index+1], :])
+
+    # if next location is longer than end point
+    # thus, change direction
+    if np.all(np.abs(tmp - norm_direction[index]) < 1e-3):
+        uav_time[t] = points[route[index+1], :]
+        index = index + 1
+
+    # loop until reach the last point
+    if index == len(points):
+        break
+
+# design the axis
+ax.set_xlabel("x-axis [m]")
+ax.set_ylabel("y-axis [m]")
+ax.set_xticks(np.arange(X_MIN, X_MAX + 1, X_GRID))
+ax.set_yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
+ax.set_xlim(X_MIN, X_MAX)
+ax.set_ylim(Y_MIN, Y_MAX)
+ax.grid()
+uavbat1=MAX_UAV_BATTERY
+t2=0
+ttt=0
+# plot real time update trajectory
+for t in range(len(uav_time)-1):
+    ttt=t+t2
+    # update title
+    ax.set_title(f"Simulation Result [ t = {ttt}s ]")
+
+    # calculate distance
+    distance_uav2gu = distance_matrix(
+        [np.append(uav_time[t+1], UAV_ALTITUDE)], gu_xyz)
+
+    # calculate receive power
+    rx_power = calc_rx_power(distance_uav2gu)
+
+    # update the gu battery base on the maximum distance
+    for a in range(1,6):
+        gucount=0
+        charge=0
+        times=[]
+        if centers[a][0]==uav_time[t+1][0] and centers[a][1]==uav_time[t+1][1]:
+            for k in range(10):
+                if centers[a][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[a][0]+RADIUS_FOR_KMEAN and centers[a][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[a][1]+RADIUS_FOR_KMEAN and gu_bat[k]!=100:
+                    gu_bat[k]=100
+                    gucount+=1
+                    d1=(((centers[a][0]-gu_x[k])**2)+((centers[a][1]-gu_y[k])**2)+100)**(1/2)
+                    times=np.append(times,(100/calc_rx_power(d1)))
+                    #print("centers:"+str(centers[a])+", gus:"+str(gu_x[k])+","+str(gu_y[k]))
+                    #print(times)
+            t2+=int(np.max(times))
+            
+            ax.text(x=uav_time[t+1][0] - 6, y=uav_time[t+1][1] - 8, s=f"{int(np.max(times)):.2f}sec")
+            
+            uavbat1-=(gucount*100)+(np.max(times))
+            #gu_bat += (rx_power*(distance_uav2gu <= MAX_BEAM_DISTANCE+1))[0]
+    if uav_time[t+1][0]==50 and uav_time[t+1][1]==50:
+        uavbat1=MAX_UAV_BATTERY
+            #gu_bat+=(100*(distance_uav2gu<=MAX_BEAM_DISTANCE+1))[0]
+        
+    # plot arrow
+    arrow = mpatches.FancyArrowPatch(
+        (uav_time[t][0], uav_time[t][1]),
+        (uav_time[t+1][0], uav_time[t+1][1]),
+        edgecolor="none",
+        facecolor="green",
+        mutation_scale=20,
+        zorder=0
+    )
+    tmp = ax.add_patch(arrow)
+
+    # scatter uav location
+    scatter_uav = ax.scatter(
+        x=uav_time[t+1][0],
+        y=uav_time[t+1][1],
+        c="red",
+        marker="s",
+        zorder=1
+    )
+    uavbat1-=UAV_MOVE
+
+    
+    if t>0:
+        uav_batt.remove()
+    uav_batt = ax.text(
+        x=uav_time[t+1][0] - 6, y=uav_time[t+1][1] - 7, s=f"{uavbat1:.2f}mWs")
+
+    # remove the previous beam cirle and plot the new one
+    if t > 0:
+         beam_circle.remove()
+         
+    beam_circle = Ellipse(
+        xy=(uav_time[t+1][0], uav_time[t+1][1]),
+        width=MAX_BEAM_DIAMETER,
+        height=MAX_BEAM_DIAMETER,
+        angle=0,
+        edgecolor="none",
+        facecolor="orange",
+        alpha=0.2,
+        zorder=0,
+    )
+    uav_beam = ax.add_patch(beam_circle)
+
+    # remove the previous battery text
+    for i in range(NUM_GU):
+        current_batt[i].remove()
+        current_batt[i] = ax.text(
+            x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]:.2f}mWs")
+
+    # update the figure
+    display(fig)
+    clear_output(wait=True)
+
+    # set the time sleep
+    time.sleep(0.05)

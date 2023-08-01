@@ -142,6 +142,11 @@ centers=[[50, 50],
          [89, 20],
          [35.6667, 15.33],
          [25.5, 82.5]]
+print(pd.read_csv('centers.csv'))
+df=pd.read_csv('centers.csv')
+df = df.drop(df.columns[0], axis=1)
+centers=df.to_numpy()
+print(centers)
 
 for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
