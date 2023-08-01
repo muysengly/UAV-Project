@@ -174,7 +174,7 @@ for i in range(len(centers)):
 
 
 #RL
-episode=1000
+episode=3000
 #about route
 route=[]
 initial_state=list(range(len(centers)))
@@ -186,6 +186,7 @@ current_state=0
 # sec= usedtime(distance,speed,chargetime)
 EPSILON = 0.99 #epsilon decay
 epsilon_decay=EPSILON
+epsilon_decrease=EPSILON/episode
 DISCOUNT_RATE=0.9
 LEARNING_RATE=0.1
 length_centers = len(centers)-1
@@ -316,24 +317,30 @@ for countepisode in range(episode):
         cs=route[insertq]
         ns=route[insertq+1]
         if ns>cs:
-            qtable[cs][ns-1][1]=qreward(total_t,length_centers,insertq,DISCOUNT_RATE)
+            qtable[cs][ns-1][2]+=1
+            qtable[cs][ns-1][1]=((qtable[cs][ns-1][1])+qreward(total_t,length_centers,insertq,DISCOUNT_RATE))/2
         else:
-            qtable[cs][ns][1]=qreward(total_t,length_centers,insertq,DISCOUNT_RATE)
+            qtable[cs][ns][2]+=1
+            qtable[cs][ns][1]=((qtable[cs][ns][1])+qreward(total_t,length_centers,insertq,DISCOUNT_RATE))/2
     #for findreward in range(length_centers):
 
     print(f"total time={total_t}")
     print("--------------------------------")
     episode_done.append(route)
+    epsilon_decay-=epsilon_decrease
+
+#for final route
+
 
 
 m,n,r = qtable.shape
 out_arr = np.column_stack((np.repeat(np.arange(m),n),qtable.reshape(m*n,-1)))
 out_df = pd.DataFrame(out_arr,columns=column_names)
 
-print(f"episode_done:{episode_done}")
-print(calc_move_distances(episode_done[0],centers,length_centers))
-print(f"Q table:{qtable}")
+print("Q table:")
 print(pd.DataFrame(out_df))
+print(f"last route: {episode_done[episode-1]}")
+print(f"centers: {centers}")
 
 
 

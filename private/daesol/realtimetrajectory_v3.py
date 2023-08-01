@@ -68,7 +68,7 @@ X_GRID = 10  # number of x grid
 Y_GRID = 10  # number of y grid
 UAV_TX_POWER = 30  # uav's transmit power in [dBm]
 
-MAX_UAV_BATTERY=800 #uav's battery; 500mW
+MAX_UAV_BATTERY=1200 #uav's battery; 500mW
 UAV_SPEED = 6 #[m/s]
 UAV_MOVE= 10 #10mWs when moving
 UAV_HOV= 2 # 5mWs when hovering
@@ -106,108 +106,19 @@ for i in range(NUM_GU):
 countA=np.zeros(10)
 clusterNum=0
 RADIUS_FOR_KMEAN=MAX_BEAM_RADIUS #17m(radius) - x(constant)
-for i in range(1,10):
-    countA=np.zeros(10)
-    kmeans = KMeans(
-        n_clusters=i,
-        n_init="auto"
-    ).fit(gu_xyz)
-    centers = kmeans.cluster_centers_
-    clear_output(False)
-    for j in range(i):
-        for k in range(10):
-            if centers[j][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[j][0]+RADIUS_FOR_KMEAN and centers[j][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[j][1]+RADIUS_FOR_KMEAN:
-                    print("radius: "+str(RADIUS_FOR_KMEAN))
-                    print("center: "+str(centers[j][0])+", "+str(centers[j][1]))
-                    print("gu("+str(k)+"):"+str(gu_x[k])+", "+str(gu_y[k]))
-                    countA[k]=1
-    print("cluster num= "+str(i))
-    print(centers)
-    print(countA)
-    if np.sum(countA)==10:
-        clusterNum=i
-        break
-print(centers)
-print(clusterNum)
-print("count:"+str(countA))
-print("----------------------------------")
 
-centers=np.vstack(([[50, 50]], centers[:, 0:2]))
-"""centers=[[50, 50],
-         [1.5, 23.5],
-         [35.5, 42.5],
-         [89, 20],
-         [35.6667, 15.33],
-         [25.5, 82.5]]"""
-
+centers=[[50,50],
+ [3,17],
+ [35.33333333,61.33333333],
+ [82,3],
+ [94,38],
+ [83,93],
+ [18,46.5]]
+points=np.vstack((centers))
 for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
     plt.text(x=centers[i][0] - 1.5, y=centers[i][1] + 2, s=f"C-{i}")
-
-#distances
-route=[]
-currentloc=0
-currentlocXY=np.zeros(2)
-currentlocXY=centers[currentloc]
-currentbatt=MAX_UAV_BATTERY
-gucounter=0
-distances=np.zeros(len(centers))
-route.append(0)
-for a in range(9):
-    distances[0]=9999
-    batt4p2p=0
-    batt4hov=0
-    batt4txpw=0
-    gucounter=0
-
-    if currentbatt>UAV_LOWBATT: # if current battery is higher than
-        #move to next point
-        for i in range(1,len(centers)):
-            if i == currentloc:
-                distances[i]=9999
-            elif np.any(np.in1d(route,i))==1:
-                distances[i]=9999
-            else:
-                distances[i]=distance3d(centers,currentloc,i)
-        currentloc=np.argmin(distances)
-        currentlocXY=centers[currentloc]
-        route.append(currentloc)
-        batt4p2p=(np.min(distances)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
-
-        currentbatt-=batt4p2p
-        time1=[]
-        tttt=1
-        #check how many GU's are there inside beam circle
-        for k in range(10):
-            if centers[currentloc][0]-RADIUS_FOR_KMEAN<=gu_x[k]<=centers[currentloc][0]+RADIUS_FOR_KMEAN and centers[currentloc][1]-RADIUS_FOR_KMEAN<=gu_y[k]<=centers[currentloc][1]+RADIUS_FOR_KMEAN and gu_bat[k]!=100:
-                gucounter+=1
-                gu_bat[k]=100
-                dd=(((centers[currentloc][0]-gu_x[k])**2)+((centers[currentloc][1]-gu_y[k])**2)+100)**(1/2)
-                time1=np.append(time1,(100/calc_rx_power(dd)))
-                print("times: "+str(time1))
-                current_batt[k].remove()
-                current_batt[k] = ax.text(
-                    x=gu_x[k] - 6, y=gu_y[k] - 7, s=f"{gu_bat[k]:.2f}mWs")
-        if len(time1)>0:
-           tttt=int(np.max(time1))
-        batt4hov=tttt*UAV_HOV # x second * power used for hovering 
-        batt4txpw=gucounter*100 # number of GU's inside Beam * power used for trasmitting power
-        currentbatt-=(batt4hov+batt4txpw) 
-        #end of move to next point
-    else: #go to charge station
-        batt4p2p=(distance3d(centers,currentloc,0)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
-        currentloc=0
-        currentlocXY=centers[currentloc]
-        route.append(currentloc)
-        currentbatt=MAX_UAV_BATTERY
-
-points=np.vstack((centers,[50,50]))
-print("******center********")
-print(centers)
-print("***********point*********")
-print(points)
-print("*******route********")
-print(route)
+route=[0, 2, 5, 0, 6, 1, 4, 3]
 #uav fly
 
 
@@ -256,7 +167,7 @@ ax.set_yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
 ax.set_xlim(X_MIN, X_MAX)
 ax.set_ylim(Y_MIN, Y_MAX)
 ax.grid()
-uavbat1=800
+uavbat1=MAX_UAV_BATTERY
 t2=0
 ttt=0
 # plot real time update trajectory
@@ -293,7 +204,7 @@ for t in range(len(uav_time)-1):
             uavbat1-=(gucount*100)+(np.max(times))
             #gu_bat += (rx_power*(distance_uav2gu <= MAX_BEAM_DISTANCE+1))[0]
     if uav_time[t+1][0]==50 and uav_time[t+1][1]==50:
-        uavbat1=800
+        uavbat1=MAX_UAV_BATTERY
             #gu_bat+=(100*(distance_uav2gu<=MAX_BEAM_DISTANCE+1))[0]
         
     # plot arrow
