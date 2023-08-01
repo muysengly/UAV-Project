@@ -64,9 +64,9 @@ def qfunc(currents,nexts,length,qtable,alpha,gamma):
     min_nextq=np.min(nextq_array)
     return currentq+(alpha*((gamma*min_nextq)-(currentq)))
 
-def qfunc2(currents,nexts,length,qtable,alpha,gamma,center,timestep):
+def qfunc2(currents,nexts,length,qtable,alpha,gamma,center,timestep,distance):
     distancei=(((center[int(currents)][0]-center[int(nexts)][0])**2)+((center[int(currents)][1]-center[int(nexts)][1])**2)+100)**(1/2)
-    reward=distancei*(gamma**timestep)
+    reward=distance*(gamma**timestep)
     if nexts>currents:
         currentq=qtable[currents][nexts-1][1]
     else:
@@ -74,7 +74,7 @@ def qfunc2(currents,nexts,length,qtable,alpha,gamma,center,timestep):
     nextq_array=[]
     for i in range(length):
         nextq_array.append(qtable[currents][i][1])
-    min_nextq=np.max(nextq_array)
+    min_nextq=np.min(nextq_array)
     return currentq+(alpha*(reward+(gamma*min_nextq)-(currentq)))
 
 
@@ -175,13 +175,7 @@ print("count:"+str(countA))
 print("----------------------------------")
 
 centers=np.vstack(([[50, 50]], centers[:, 0:2]))
-"""centers=[[50, 50],
-        [83, 93],
-        [6.5, 30],
-        [94, 38],
-        [23, 57.5],
-        [43, 59.5],
-        [82, 3]]"""
+
 
 for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
@@ -189,7 +183,7 @@ for i in range(len(centers)):
 
 
 #RL
-episode=2000
+episode=3000
 #about route
 route=[]
 initial_state=list(range(len(centers)))
@@ -274,13 +268,13 @@ for countepisode in range(episode):
                 print(f"b, next={current_state}, tmparray={np.argmin(tmparray)}")
             batt4p2p=(distance3d(centers,current_state,next_state)/UAV_SPEED)*UAV_MOVE #power used for moving point to point
             print(f"current={current_state}, next={next_state}")
-
+            d1=calc_move_distances(route,centers,len(route)-1)
             #find qvalue->qfunc() before changing state
             if next_state>current_state:
-                qtable[current_state][next_state-1][1]=(qtable[current_state][next_state-1][1]+qfunc2(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE,centers,timestep))/2
+                qtable[current_state][next_state-1][1]=qfunc2(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE,centers,timestep,d1)
                 timestep+=1  
             else:
-                qtable[current_state][next_state][1]=(qtable[current_state][next_state][1]+qfunc2(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE,centers,timestep))/2
+                qtable[current_state][next_state][1]=qfunc2(current_state,next_state,length_centers,qtable,LEARNING_RATE,DISCOUNT_RATE,centers,timestep,d1)
                 timestep+=1  
             current_state=next_state
             print(possible_state)
@@ -331,10 +325,10 @@ for countepisode in range(episode):
         ns=route[insertq+1]
         if ns>cs:
             qtable[cs][ns-1][2]+=1
-            qtable[cs][ns-1][1]=((qtable[cs][ns-1][1])+qreward(total_t,length_centers,insertq,DISCOUNT_RATE))
+            qtable[cs][ns-1][1]=LEARNING_RATE*qreward(total_t,length_centers,insertq,DISCOUNT_RATE)
         else:
             qtable[cs][ns][2]+=1
-            qtable[cs][ns][1]=((qtable[cs][ns][1])+qreward(total_t,length_centers,insertq,DISCOUNT_RATE))
+            qtable[cs][ns][1]=LEARNING_RATE*qreward(total_t,length_centers,insertq,DISCOUNT_RATE)
 """
     print(f"total time={total_t}")
     print("--------------------------------")
