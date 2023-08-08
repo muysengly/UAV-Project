@@ -121,7 +121,7 @@ df = df.drop(df.columns[0], axis=1)
 route=df.to_numpy()
 route=np.squeeze(route.T)
 print(route)
-route=[0, 6, 1, 0, 2, 4, 5,0]
+route=[0, 1, 3, 6, 5, 0, 2, 4,0]
 points=np.vstack((centers))
 for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
