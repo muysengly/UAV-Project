@@ -183,7 +183,7 @@ for i in range(len(centers)):
 
 
 #RL
-episode=3000
+episode=500
 #about route
 route=[]
 initial_state=list(range(len(centers)))
@@ -244,13 +244,12 @@ for countepisode in range(episode):
     chargingtime=0
     karray1=[]
     timestep=1
-
+    current_state=0
     while gubigcounter!=NUM_GU:
         batt4p2p=0
         batt4hov=0
         batt4txpw=0
         gucounter=0
-        current_state=0
         if currentbatt>UAV_LOWBATT: # if current battery is higher than
             if random.random()<epsilon_decay: #any states
                 next_state=random.choice(possible_state)

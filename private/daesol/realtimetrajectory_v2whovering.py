@@ -68,7 +68,7 @@ X_GRID = 10  # number of x grid
 Y_GRID = 10  # number of y grid
 UAV_TX_POWER = 30  # uav's transmit power in [dBm]
 
-MAX_UAV_BATTERY=800 #uav's battery; 500mW
+MAX_UAV_BATTERY=1200 #uav's battery; 500mW
 UAV_SPEED = 6 #[m/s]
 UAV_MOVE= 10 #10mWs when moving
 UAV_HOV= 2 # 5mWs when hovering
@@ -256,7 +256,7 @@ ax.set_yticks(np.arange(Y_MIN, Y_MAX + 1, Y_GRID))
 ax.set_xlim(X_MIN, X_MAX)
 ax.set_ylim(Y_MIN, Y_MAX)
 ax.grid()
-uavbat1=800
+uavbat1=1200
 t2=0
 ttt=0
 # plot real time update trajectory
@@ -293,7 +293,7 @@ for t in range(len(uav_time)-1):
             uavbat1-=(gucount*100)+(np.max(times))
             #gu_bat += (rx_power*(distance_uav2gu <= MAX_BEAM_DISTANCE+1))[0]
     if uav_time[t+1][0]==50 and uav_time[t+1][1]==50:
-        uavbat1=800
+        uavbat1=1200
             #gu_bat+=(100*(distance_uav2gu<=MAX_BEAM_DISTANCE+1))[0]
         
     # plot arrow
