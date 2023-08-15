@@ -1,50 +1,32 @@
-import math
-import time
+from scipy.spatial import distance_matrix
+import numpy as np
+import pandas as pd
+UAV_ALTITUDE=10
+NUM_GU=10
+MAX_BEAM_ANGLE = 60  # maximum beam-forming angle [degree]
+MAX_BEAM_DISTANCE = UAV_ALTITUDE / np.cos(MAX_BEAM_ANGLE * np.pi / 180)
+centers=[[50, 50],
+         [1.5, 23.5],
+         [35.5, 42.5],
+         [89, 20],
+         [35.6667, 15.33],
+         [25.5, 82.5]]
 
-def euclidean_distance(p1, p2):
-    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+gu_memory=np.ones((2,NUM_GU))
+df=pd.read_excel('locationInformation.xlsx')
+for x in range(2):
+    for y in range(10):
+        gu_memory[x][y]=int(df.iloc[y+1,x])
+gu_x = gu_memory[0]
+gu_y = gu_memory[1]
+gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+gu_xyz = np.array((gu_x,gu_y,gu_z)).T
 
-def tsp_dp(points):
-    n = len(points)
-    all_bits = (1 << n) - 1
-
-    memo = [[-1] * n for _ in range(1 << n)]
-
-    def solve(mask, pos):
-        if mask == all_bits:
-            return euclidean_distance(points[pos], points[0]), [0]
-
-        if memo[mask][pos] != -1:
-            return memo[mask][pos]
-
-        min_dist = float('inf')
-        best_route = []
-        for next_pos in range(n):
-            if (mask & (1 << next_pos)) == 0:
-                new_dist, route = solve(mask | (1 << next_pos), next_pos)
-                new_dist += euclidean_distance(points[pos], points[next_pos])
-                if new_dist < min_dist:
-                    min_dist = new_dist
-                    best_route = [next_pos] + route
-
-        memo[mask][pos] = min_dist, best_route
-        return min_dist, best_route
-
-    shortest_distance, route = solve(1, 0)
-    route = [0] + route  # Add the starting city to the route
-    return shortest_distance, route
-
-centers = [[50, 50],
-           [1.5, 23.5],
-           [35.5, 42.5],
-           [89, 20],
-           [35.6667, 15.33],
-           [25.5, 82.5]]
-
-start_time = time.time()
-shortest_distance, route = tsp_dp(centers)
-end_time = time.time()
-
-print("Shortest distance:", shortest_distance)
-print("Time taken:", end_time - start_time, "seconds")
-print("Route:", route)
+distance_uav2gu = distance_matrix(
+            [np.append(centers[2], UAV_ALTITUDE)], gu_xyz)
+distance_center=np.squeeze(distance_uav2gu <= MAX_BEAM_DISTANCE)
+distance_index=np.where(distance_center == True)
+print(distance_center)
+print(distance_index[0])
+print(distance_uav2gu)
+#100/calcrxpower
