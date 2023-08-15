@@ -195,7 +195,7 @@ end_time = time.time()
 print("Shortest distance:", shortest_distance)
 print("Time taken:(program)", end_time - start_time, "seconds")
 print("Route:", route)
-print(f"hov time={calc_totaltime(shortest_distance)}s, used power={calc_usedpower(shortest_distance)}mW")
+print(f"total time taken={calc_totaltime(shortest_distance)}s, used power={calc_usedpower(shortest_distance)}mW")
 
 #drawing
 for i in range(len(route)-1):
