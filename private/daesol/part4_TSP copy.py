@@ -9,7 +9,7 @@ from frigidum.examples import tsp
 from matplotlib.patches import Ellipse
 from scipy.spatial import distance_matrix
 from sklearn.cluster import KMeans
-import pandas as pd
+
 
 def makeUAV(xpos,ypos,maxbeam,uavno):
     uav_number = "UAV"+str(uavno)
@@ -24,7 +24,7 @@ def distance3d(center,i,j):
     return (((center[i][0]-center[j][0])**2)+((center[i][1]-center[j][1])**2)+(UAV_ALTITUDE**2))**(1/2)
 
 #intial parameter
-NUM_GU = 10  # number of ground users
+NUM_GU = 30  # number of ground users
 TX_POWER = 32  # transmit power [dBm]
 F = 1e9  # frequency 1GH [Hz]
 C = 299792458  # speed of light [m/s]
@@ -62,15 +62,11 @@ fig, ax = plt.subplots(figsize=(6, 6))
 
 
 #call GU
-gu_memory=np.ones((2,NUM_GU))
-df=pd.read_excel('locationInformation.xlsx')
-for x in range(2):
-    for y in range(10):
-        gu_memory[x][y]=int(df.iloc[y+1,x])
-gu_x = gu_memory[0]
-gu_y = gu_memory[1]
-gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
-gu_xyz = np.array((gu_x,gu_y,gu_z)).T
+gu_x = np.random.uniform(low=X_MIN, high=X_MAX, size=(NUM_GU,))
+gu_y = np.random.uniform(low=Y_MIN, high=Y_MAX, size=(NUM_GU,))
+#gu_z = np.zeros((NUM_GU,))
+#gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+gu_xyz = np.array((gu_x,gu_y)).T
 
 current_batt = []
 for i in range(NUM_GU):
@@ -79,13 +75,14 @@ for i in range(NUM_GU):
     current_batt.append(
         ax.text(x=gu_x[i] - 6, y=gu_y[i] - 7, s=f"{gu_bat[i]}mWh"))
 
+kmeans = KMeans(
+    n_clusters=15,
+    n_init="auto"
+).fit(gu_xyz)
 
-centers=[[50, 50],
-         [1.5, 23.5],
-         [35.5, 42.5],
-         [89, 20],
-         [35.6667, 15.33],
-         [25.5, 82.5]]
+centers = kmeans.cluster_centers_
+clear_output(False)
+
 """print(pd.read_csv('centers.csv'))
 df=pd.read_csv('centers.csv')
 df = df.drop(df.columns[0], axis=1)
@@ -142,12 +139,16 @@ print("Shortest distance:", shortest_distance)
 print("Time taken:", end_time - start_time, "seconds")
 print("Route:", route)
 
-
 #drawing
+colorcount=0
 for i in range(len(route)-1):
     x_vals = [centers[int(route[i])][0], centers[int(route[i + 1])][0]]
     y_vals = [centers[int(route[i])][1], centers[int(route[i + 1])][1]]
-    plt.plot(x_vals, y_vals, color=color[i])
+    if colorcount==8:
+        colorcount=0
+    plt.plot(x_vals, y_vals, color=color[colorcount])
+    colorcount+=1
+
 
 
 
