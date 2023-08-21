@@ -203,9 +203,6 @@ for i in range(len(route)-1):
     y_vals = [centers[int(route[i])][1], centers[int(route[i + 1])][1]]
     plt.plot(x_vals, y_vals, color=color[i])
 
-
-
-
 plt.xlabel("x-axis [m]")
 plt.ylabel("y-axis [m]")
 plt.title("Simulation Environment")

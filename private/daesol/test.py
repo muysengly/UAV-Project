@@ -1,32 +1,34 @@
-from scipy.spatial import distance_matrix
 import numpy as np
-import pandas as pd
-UAV_ALTITUDE=10
-NUM_GU=10
-MAX_BEAM_ANGLE = 60  # maximum beam-forming angle [degree]
+X_MIN = 0  # minimum x-axis [meter]
+X_MAX = 100  # maximum x-axis [meter]
+Y_MIN = 0  # minimum y-axis [meter]
+Y_MAX = 100  # maximum y-axis [mseter]
+from scipy.spatial import distance_matrix
+
+NUM_GU = 10
+UAV_ALTITUDE = 10
+MAX_BEAM_ANGLE = 60  # maximum beamforming angle [degree]
+# maximum beamforming diameter [meter]
+MAX_BEAM_DIAMETER = 2*UAV_ALTITUDE*np.tan(MAX_BEAM_ANGLE*np.pi/180)
+MAX_BEAM_RADIUS = MAX_BEAM_DIAMETER/2
 MAX_BEAM_DISTANCE = UAV_ALTITUDE / np.cos(MAX_BEAM_ANGLE * np.pi / 180)
+gu_x = np.random.uniform(low=X_MIN, high=X_MAX, size=(NUM_GU,))
+gu_y = np.random.uniform(low=Y_MIN, high=Y_MAX, size=(NUM_GU,))
+gu_x = np.array([10., 20., 30., 56., 24.,12., 67., 55., 94., 2.])
+gu_z = np.array([23., 75., 68., 55., 45., 23., 44., 87., 65., 13.])
+#gu_z = np.zeros((NUM_GU,))
+gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+gu_xyz = np.array((gu_x,gu_y,gu_z)).T
+
 centers=[[50, 50],
          [1.5, 23.5],
          [35.5, 42.5],
          [89, 20],
          [35.6667, 15.33],
          [25.5, 82.5]]
-
-gu_memory=np.ones((2,NUM_GU))
-df=pd.read_excel('locationInformation.xlsx')
-for x in range(2):
-    for y in range(10):
-        gu_memory[x][y]=int(df.iloc[y+1,x])
-gu_x = gu_memory[0]
-gu_y = gu_memory[1]
-gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
-gu_xyz = np.array((gu_x,gu_y,gu_z)).T
-
-distance_uav2gu = distance_matrix(
-            [np.append(centers[2], UAV_ALTITUDE)], gu_xyz)
-distance_center=np.squeeze(distance_uav2gu <= MAX_BEAM_DISTANCE)
-distance_index=np.where(distance_center == True)
-print(distance_center)
-print(distance_index[0])
-print(distance_uav2gu)
-#100/calcrxpower
+for i in range(2):
+    for x in range(5):
+        distance_uav2gu = np.squeeze(distance_matrix(
+                            [np.append(centers[x], UAV_ALTITUDE)], gu_xyz))
+        distance_center=np.squeeze(distance_uav2gu <= MAX_BEAM_DISTANCE)
+        print(distance_uav2gu)
