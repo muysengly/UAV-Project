@@ -63,11 +63,7 @@ gu_xyz = np.array((gu_x,gu_y,gu_z)).T
 gu_xyz
 # i use k-mean algorithm 
 # to find the center with 7 cluster-head
-"""kmeans = KMeans(
-    n_clusters=7,
-    n_init="auto"
-).fit(gu_xyz)
-
+"""kmeans = KMeans(n_clusters=7,n_init="auto").fit(gu_xyz)
 centers = kmeans.cluster_centers_
 clear_output(False)
 """
