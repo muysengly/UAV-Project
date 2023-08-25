@@ -19,6 +19,9 @@ def calc_rx_power(d):
     # received power [mWh]
     return 1*10**((TX_POWER - (20*np.log10((4*np.pi*d*F)/C)))/10) * 1000
 
+def distance3d(center,i,j):
+    return (((center[i][0]-center[j][0])**2)+((center[i][1]-center[j][1])**2)+(UAV_ALTITUDE**2))**(1/2)
+
 def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
@@ -94,6 +97,11 @@ def calc_usedpower(finald):
     usedpower=(NUM_GU*GU_MAXBATT)+(calc_hovtime()*UAV_HOV)+(calc_movtime(finald)*UAV_MOVE)
     return round(usedpower,3)
 
+def calc_minhovtime(i):
+    distance_uav2gu = np.squeeze(distance_matrix(
+                [np.append(centers[i], UAV_ALTITUDE)], gu_xyz))
+    
+    return 100/calc_rx_power(distance_uav2gu[np.argmin(distance_uav2gu)])
 
 #intial parameter
 NUM_GU = 10  # number of ground users
@@ -170,83 +178,61 @@ for i in range(1,10):
         break
 print(centers)
 print(f"minimum cluster #:{minClusterNum}")
-######################################### 
-########### Maximum # ~ minimum # of cluster
-num=[]
-dist=[]
-T_taken=[]
-T_total=[]
-RU=[]
-C_all=[]
-for n in range(NUM_GU,(minClusterNum-1),-1):
-    kmeans = KMeans(n_clusters=n, n_init="auto").fit(gu_xyz)
-    centers = kmeans.cluster_centers_
-    clear_output()
-    centers=np.vstack(([[50, 50]], centers[:, 0:2]))
 
-    print(f"centers={centers}")
-    start_time = time.time()
-    shortest_distance, route = tsp_dp(centers)
-    end_time = time.time()
-    time_taken = end_time - start_time
-    total_time = calc_totaltime(shortest_distance)
+#####################################################################
+###########Mode 2 -> re-clustering
+num2=[]
+dist2=[]
+T_taken2=[]
+T_total2=[]
+RU2=[]
+C_all2=[]
 
-    num.append(n)
-    dist.append(shortest_distance)
-    T_taken.append(time_taken)
-    T_total.append(total_time)
-    RU.append(route)
-    C_all.append(centers)
+#for n in range(NUM_GU,(minClusterNum-1),-1):
+total_time=0
+kmeans = KMeans(n_clusters=7, n_init="auto").fit(gu_xyz)
+centers = kmeans.cluster_centers_
+clear_output()
+centers=np.vstack(([[50, 50]], centers[:, 0:2]))
+print(f"before:")
+print("centers")
+print(centers)
 
+countRoute=1
+countCenter=len(centers)-1
+shortest_distance, route = tsp_dp(centers)
+
+for identifyGU in range(len(route)-1):
+    distance_uav2gu = np.squeeze(distance_matrix(
+                [np.append(centers[route[identifyGU]], UAV_ALTITUDE)], gu_xyz))
+    distance_center=np.squeeze(distance_uav2gu <= MAX_BEAM_DISTANCE)
+    distance_index=np.where(distance_center == True)
+    print(len(distance_index))
+    print(distance_index[0])
+
+    if len(distance_index[0])>2:
+        new_gu=[]
+        insert_route=[]
+        for insertcenter in range(len(distance_index[0])):
+            new_gu.append(np.delete(gu_xyz[distance_index[0][insertcenter]],2,axis=0))
+        print(f"new gu:{new_gu}")
+        kmeans = KMeans(n_clusters=2, n_init="auto").fit(new_gu)
+        centers2 = kmeans.cluster_centers_
+        centers=np.append(centers,centers2[:,0:2])
+        for x in range(len(centers2)):
+            countCenter+=1
+            insert_route.append(countCenter)
+        route=np.insert(route,countRoute,insert_route)
+        countRoute+=len(centers2)
+        print(centers)
+        total_time+=calc_minhovtime(identifyGU)
+print("after")
+print(centers) 
+print(route)
 
 #######################################################################
 
-#TSP algorithm
-#used Dynamic Programming
 
-#input: centers: cluster centers array(x,y)
-#output1: route array
-
-#output2: time taken(=hovering time + moving time)
-#moving time= distance / uav_speed
-#hovering time=sum of time taken to charge all GU's per cluster
-
-#output3: used power(=(100mW * NUM_GU) + (hovering time * 2mW) + (moving time *5mW) )
-"""
-start_time = time.time()
-shortest_distance, route = tsp_dp(centers)
-end_time = time.time()
-print("Shortest distance:", shortest_distance)
-print("Time taken:(program)", end_time - start_time, "seconds")
-print("Route:", route)
-print(f"total time taken={calc_totaltime(shortest_distance)}s, used power={calc_usedpower(shortest_distance)}mW")
-"""
-###############################################################
-#results
-dictionary={
-    'Cluster_num' : num,
-    'DIST' : dist,
-    'TIME' : T_taken, 
-    'Total' : T_total,
-    'ROUTE' : RU
-}
-
-df=pd.DataFrame(dictionary)
-df.to_csv('centers.csv', index=False)
-
-print(df)
-print("df min")
-print(np.argmin(df['Total']))
-print(df.loc[np.argmin(df['Total'])])
-print("centers")
-print(C_all[np.argmin(df['Total'])])
-
-route=RU[np.argmin(df['Total'])]
-centers=C_all[np.argmin(df['Total'])]
-
-###############################################################
-#drawing
-#make cluster center points
 for i in range(len(centers)):
     plt.scatter(x=centers[i][0], y=centers[i][1], c=color[9])
     plt.text(x=centers[i][0] - 1.5, y=centers[i][1] + 2, s=f"C-{i}")
