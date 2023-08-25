@@ -22,6 +22,8 @@ def calc_rx_power(d):
 def distance3d(center,i,j):
     return (((center[i][0]-center[j][0])**2)+((center[i][1]-center[j][1])**2)+(UAV_ALTITUDE**2))**(1/2)
 
+
+
 #intial parameter
 NUM_GU = 30  # number of ground users
 TX_POWER = 32  # transmit power [dBm]
@@ -63,9 +65,9 @@ fig, ax = plt.subplots(figsize=(6, 6))
 #call GU
 gu_x = np.random.uniform(low=X_MIN, high=X_MAX, size=(NUM_GU,))
 gu_y = np.random.uniform(low=Y_MIN, high=Y_MAX, size=(NUM_GU,))
-#gu_z = np.zeros((NUM_GU,))
+gu_z = np.zeros((NUM_GU,))
 #gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
-gu_xyz = np.array((gu_x,gu_y)).T
+gu_xyz = np.array((gu_x,gu_y,gu_z)).T
 
 current_batt = []
 for i in range(NUM_GU):
