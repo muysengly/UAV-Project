@@ -142,8 +142,15 @@ color=["red","orange","yellow","green","olive","blue","skyblue","violet","brown"
 fig, ax = plt.subplots(figsize=(6, 6))
 ####################################################################
 #call GU
+gu_memory=np.ones((2,NUM_GU))
 gu_x = np.random.uniform(low=X_MIN, high=X_MAX, size=(NUM_GU,))
 gu_y = np.random.uniform(low=Y_MIN, high=Y_MAX, size=(NUM_GU,))
+df=pd.read_excel('locationInformation.xlsx')
+for x in range(2):
+    for y in range(10):
+        gu_memory[x][y]=int(df.iloc[y+1,x])
+gu_x = gu_memory[0]
+gu_y = gu_memory[1]
 gu_z = np.zeros((NUM_GU,))
 #gu_z = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 gu_xyz = np.array((gu_x,gu_y,gu_z)).T
@@ -190,7 +197,7 @@ C_all2=[]
 
 #for n in range(NUM_GU,(minClusterNum-1),-1):
 total_time=0
-kmeans = KMeans(n_clusters=7, n_init="auto").fit(gu_xyz)
+kmeans = KMeans(n_clusters=minClusterNum, n_init="auto").fit(gu_xyz)
 centers = kmeans.cluster_centers_
 clear_output()
 centers=np.vstack(([[50, 50]], centers[:, 0:2]))
@@ -202,30 +209,47 @@ countRoute=1
 countCenter=len(centers)-1
 shortest_distance, route = tsp_dp(centers)
 
-for identifyGU in range(len(route)-1):
+gu_charged=[0,0,0,0,0,0,0,0,0,0]
+gu_full=[1,1,1,1,1,1,1,1,1,1]
+identifyGU=0
+print(f"route first:{route}")
+while True:
     distance_uav2gu = np.squeeze(distance_matrix(
                 [np.append(centers[route[identifyGU]], UAV_ALTITUDE)], gu_xyz))
     distance_center=np.squeeze(distance_uav2gu <= MAX_BEAM_DISTANCE)
     distance_index=np.where(distance_center == True)
-    print(len(distance_index))
-    print(distance_index[0])
+    print(len(distance_index[0]))
+    print(f"distance matrix {distance_index[0]}")
+    print(f"loc now:{route[identifyGU]}")
 
     if len(distance_index[0])>2:
-        new_gu=[]
+        new_gu=gu_xyz[distance_index[0]]
         insert_route=[]
-        for insertcenter in range(len(distance_index[0])):
-            new_gu.append(np.delete(gu_xyz[distance_index[0][insertcenter]],2,axis=0))
+        gu_charged[distance_index[0][0]]=1
         print(f"new gu:{new_gu}")
-        kmeans = KMeans(n_clusters=2, n_init="auto").fit(new_gu)
+        new_gu=np.delete(new_gu,0,axis=0)
+        print(f"new gu after={new_gu}")
+        kmeans = KMeans(n_clusters=1, n_init="auto").fit(new_gu)
         centers2 = kmeans.cluster_centers_
-        centers=np.append(centers,centers2[:,0:2])
-        for x in range(len(centers2)):
-            countCenter+=1
-            insert_route.append(countCenter)
-        route=np.insert(route,countRoute,insert_route)
-        countRoute+=len(centers2)
-        print(centers)
+        print(f"centers2{centers2}")
+        centers=np.vstack((centers, centers2[:, 0:2]))
+        #add centers
+        countCenter+=1
+        #add routes
+        route=np.insert(route,countRoute,countCenter)
+        countRoute+=1
+        print(f"centers={centers}")
+        print(f"routes: {route}")
         total_time+=calc_minhovtime(identifyGU)
+        identifyGU+=1
+    else:
+        for x in range(len(distance_index[0])):
+            gu_charged[distance_index[0][x]]=1
+    if route[identifyGU]==0 and countRoute>3:
+        break
+    countRoute+=1
+    identifyGU+=1
+
 print("after")
 print(centers) 
 print(route)
