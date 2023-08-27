@@ -216,7 +216,7 @@ dictionary={
 }
 
 df=pd.DataFrame(dictionary)
-df.to_csv('centers.csv', index=False)
+df.to_csv('result_part24.csv', index=False)
 
 print(df)
 print("df min")
@@ -303,7 +303,7 @@ for t in range(len(uav_time)-1):
     rx_power = calc_rx_power(distance_uav2gu)
 
     # update the gu battery base on the maximum distance
-    for a in range(1,6):
+    for a in range(1,len(centers)):
         gucount=0
         charge=0
         times=[]
